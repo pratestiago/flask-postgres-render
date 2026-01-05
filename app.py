@@ -1,14 +1,27 @@
 from flask import Flask
 import psycopg2
+import os
 
 app = Flask(__name__)
 
+# =========================
+# CONFIGURAÇÃO DO BANCO
+# =========================
+
+# 🔹 Banco LOCAL (PostgreSQL do seu PC)
 DB_CONFIG = {
     "host": "localhost",
     "database": "postgres",
     "user": "postgres",
     "password": "4705"
 }
+
+# 🔹 Banco do Render (vem automaticamente no ambiente)
+DATABASE_URL = os.getenv("DATABASE_URL")
+
+# =========================
+# ROTA PRINCIPAL
+# =========================
 
 @app.route("/")
 def home():
@@ -18,13 +31,18 @@ def home():
     resposta.append("Funcionou agora 😄 (Flask OK)")
 
     try:
-        # 🔌 Conexão com PostgreSQL
-        conn = psycopg2.connect(**DB_CONFIG)
+        # 🔀 Decide qual banco usar
+        if DATABASE_URL:
+            conn = psycopg2.connect(DATABASE_URL)
+        else:
+            conn = psycopg2.connect(**DB_CONFIG)
+
         cursor = conn.cursor()
 
+        # ✅ Verificação Banco
         resposta.append("Flask conectado ao PostgreSQL 🐘 (DB OK)\n")
 
-        # 📥 SELECT na tabela
+        # 📥 Consulta
         cursor.execute("SELECT * FROM public.placar")
         registros = cursor.fetchall()
 
@@ -39,6 +57,10 @@ def home():
 
     # Exibe tudo na página
     return "<br>".join(resposta)
+
+# =========================
+# START DA APLICAÇÃO
+# =========================
 
 if __name__ == "__main__":
     app.run(debug=True)
