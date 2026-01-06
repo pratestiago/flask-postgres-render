@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <title>Cartola - Sistema de Disputas</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+
+    <div class="container">
+        <h1>🏆 Sistema de Disputas Cartola</h1>
+
+        <div class="status">
+            <p>
+                Flask:
+                {% if flask_ok %}
+                    <span class="ok">OK</span>
+                {% else %}
+                    <span class="erro">ERRO</span>
+                {% endif %}
+            </p>
+
+            <p>
+                Banco de Dados:
+                {% if db_ok %}
+                    <span class="ok">Conectado</span>
+                {% else %}
+                    <span class="erro">Erro de conexão</span>
+                {% endif %}
+            </p>
+        </div>
+
+        <hr>
+
+        <ul class="menu">
+            <li>📊 Ranking da Rodada</li>
+            <li>📅 Temporada 2025</li>
+            <li>⚔️ Competições</li>
+        </ul>
+
+        <p class="footer">
+            Projeto em desenvolvimento 🚧
+        </p>
+    </div>
+
+</body>
+</html>

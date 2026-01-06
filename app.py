@@ -1,4 +1,4 @@
-from flask import Flask
+from flask import Flask, render_template
 import psycopg2
 import os
 
@@ -8,7 +8,6 @@ app = Flask(__name__)
 # CONFIGURAÇÃO DO BANCO
 # =========================
 
-# 🔹 Banco LOCAL (PostgreSQL do seu PC)
 DB_CONFIG = {
     "host": "localhost",
     "database": "postgres",
@@ -16,8 +15,14 @@ DB_CONFIG = {
     "password": "4705"
 }
 
-# 🔹 Banco do Render (vem automaticamente no ambiente)
 DATABASE_URL = os.getenv("DATABASE_URL")
+
+
+def get_connection():
+    if DATABASE_URL:
+        return psycopg2.connect(DATABASE_URL)
+    return psycopg2.connect(**DB_CONFIG)
+
 
 # =========================
 # ROTA PRINCIPAL
@@ -25,38 +30,22 @@ DATABASE_URL = os.getenv("DATABASE_URL")
 
 @app.route("/")
 def home():
-    resposta = []
-
-    # ✅ Verificação Flask
-    resposta.append("Funcionou agora 😄 (Flask OK ebaaaaaaaaaa)")
+    flask_ok = True
+    db_ok = False
 
     try:
-        # 🔀 Decide qual banco usar
-        if DATABASE_URL:
-            conn = psycopg2.connect(DATABASE_URL)
-        else:
-            conn = psycopg2.connect(**DB_CONFIG)
-
-        cursor = conn.cursor()
-
-        # ✅ Verificação Banco
-        resposta.append("Flask conectado ao PostgreSQL 🐘 (DB OK)\n")
-
-        # 📥 Consulta
-        cursor.execute("SELECT * FROM public.placar")
-        registros = cursor.fetchall()
-
-        for r in registros:
-            resposta.append(f"{r[0]} | {r[1]} | {r[2]} | {r[3]}")
-
-        cursor.close()
+        conn = get_connection()
         conn.close()
+        db_ok = True
+    except:
+        db_ok = False
 
-    except Exception as e:
-        resposta.append(f"Erro no banco ❌: {e}")
+    return render_template(
+        "index.html",
+        flask_ok=flask_ok,
+        db_ok=db_ok
+    )
 
-    # Exibe tudo na página
-    return "<br>".join(resposta)
 
 # =========================
 # START DA APLICAÇÃO
