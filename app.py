@@ -28,7 +28,7 @@ def home():
     resposta = []
 
     # ✅ Verificação Flask
-    resposta.append("Funcionou agora 😄 (Flask OK)")
+    resposta.append("Funcionou agora 😄 (Flask OK ebaaaaaaaaaa)")
 
     try:
         # 🔀 Decide qual banco usar
