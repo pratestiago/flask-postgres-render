@@ -26,3 +26,27 @@
     background-color: #007bff;
     color: white;
 }
+
+/* =========================
+   TABELA PARTICIPANTES
+========================= */
+.tabela {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 25px;
+}
+
+.tabela th,
+.tabela td {
+    padding: 10px;
+    border-bottom: 1px solid #ddd;
+    text-align: left;
+}
+
+.tabela th {
+    background-color: #f0f2f5;
+}
+
+.tabela tr:hover {
+    background-color: #f9f9f9;
+}

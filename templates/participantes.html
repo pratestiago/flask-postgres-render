@@ -2,16 +2,16 @@
 <html lang="pt-br">
 <head>
     <meta charset="UTF-8">
-    <title>Sistema de Disputas - Cartola</title>
+    <title>Participantes 2025</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
 <body>
 
 <div class="container">
-    <h1>🏆 Sistema de Disputas Cartola</h1>
+    <h1>👥 Participantes 2025</h1>
 
-<ul class="menu menu-horizontal">
-    <li><a href="#">Home </a></li>
+    <ul class="menu menu-horizontal">
+    <li><a href="/">Home </a></li>
     <li><a href="/participantes">Participantes 2025</a></li>
     <li><a href="#">Resultados</a></li>
     <li><a href="#">Classificação</a></li>
@@ -23,9 +23,25 @@
     <li><a href="#">A Direção</a></li>
 </ul>
 
+    <table class="tabela">
+        <thead>
+            <tr>
+                <th>Cartoleiro</th>
+                <th>Time</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for cartoleiro, time in participantes %}
+            <tr>
+                <td>{{ cartoleiro }}</td>
+                <td>{{ time }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
 
     <p class="footer">
-        © Sistema de Disputas Cartola — em desenvolvimento
+        <a href="/">← Voltar para Home</a>
     </p>
 </div>
 

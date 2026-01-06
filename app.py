@@ -1,11 +1,54 @@
 from flask import Flask, render_template
+import psycopg2
+import os
 
 app = Flask(__name__)
+
+DB_CONFIG = {
+    "host": "localhost",
+    "database": "postgres",
+    "user": "postgres",
+    "password": "4705"
+}
+
+DATABASE_URL = os.getenv("DATABASE_URL")
+
+
+def get_connection():
+    if DATABASE_URL:
+        return psycopg2.connect(DATABASE_URL)
+    return psycopg2.connect(**DB_CONFIG)
 
 
 @app.route("/")
 def home():
     return render_template("index.html")
+
+
+@app.route("/participantes")
+def participantes():
+    conn = get_connection()
+    cursor = conn.cursor()
+
+    cursor.execute("""
+        SELECT
+            c.nome AS cartoleiro,
+            t.nome_time
+        FROM cartoleiros c
+        JOIN times t ON t.cartoleiro_id = c.id
+        WHERE t.temporada = 2025
+        ORDER BY c.nome, t.nome_time
+    """)
+
+    participantes = cursor.fetchall()
+
+    cursor.close()
+    conn.close()
+
+    return render_template(
+        "participantes.html",
+        participantes=participantes
+    )
 
 
 if __name__ == "__main__":
