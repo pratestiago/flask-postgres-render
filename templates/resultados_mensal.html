@@ -1,8 +1,30 @@
 {% extends "base.html" %}
 
-{% block title %}Resultados Mensal {% endblock %}
+{% block title %}Resultados Mensal{% endblock %}
 
 {% block content %}
-<h2>📊 Resultados Mensal </h2>
-<p>Em desenvolvimento...</p>
+<h1>📅 Resultados Mensal</h1>
+
+<table class="tabela">
+    <thead>
+        <tr>
+            <th>#</th>
+            <th>Mês</th>
+            <th>Cartoleiro</th>
+            <th>Time</th>
+            <th>Pontos no Mês</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for mes, cartoleiro, time, pontos in resultados %}
+        <tr>
+            <td>{{ loop.index }}</td>
+            <td>{{ mes }}</td>
+            <td>{{ cartoleiro }}</td>
+            <td>{{ time }}</td>
+            <td>{{ "%.2f"|format(pontos) }}</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
 {% endblock %}

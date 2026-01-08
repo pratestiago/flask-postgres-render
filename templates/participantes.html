@@ -5,9 +5,14 @@
 {% block content %}
 <h1>👥 Participantes 2025</h1>
 
+<p>
+    Total de participantes: <strong>{{ participantes | length }}</strong>
+</p>
+
 <table class="tabela">
     <thead>
         <tr>
+            <th>#</th>
             <th>Cartoleiro</th>
             <th>Time</th>
         </tr>
@@ -15,6 +20,7 @@
     <tbody>
         {% for cartoleiro, time in participantes %}
         <tr>
+            <td>{{ loop.index }}</td>
             <td>{{ cartoleiro }}</td>
             <td>{{ time }}</td>
         </tr>

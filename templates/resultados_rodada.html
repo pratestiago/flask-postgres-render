@@ -1,8 +1,32 @@
 {% extends "base.html" %}
 
-{% block title %}Resultados por Rodada{% endblock %}
+{% block title %}Resultados da Rodada{% endblock %}
 
 {% block content %}
-<h2>📊 Resultados por Rodada</h2>
-<p>Em desenvolvimento...</p>
+<h1>📊 Resultados da Rodada {{ rodada }}</h1>
+
+<table class="tabela">
+    <thead>
+        <tr>
+            <th>#</th>
+            <th>Cartoleiro</th>
+            <th>Time</th>
+            <th>Pontos</th>
+            <th>Patrimônio</th>
+            <th>Posição</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for rodada, cartoleiro, time, pontos, patrimonio, posicao in resultados %}
+        <tr>
+            <td>{{ loop.index }}</td>
+            <td>{{ cartoleiro }}</td>
+            <td>{{ time }}</td>
+            <td>{{ pontos }}</td>
+            <td>{{ patrimonio }}</td>
+            <td>{{ posicao }}</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
 {% endblock %}

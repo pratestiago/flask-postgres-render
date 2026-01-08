@@ -25,10 +25,19 @@ def get_connection():
 CSV_PATH = "resuldado_rodada.csv"
 
 # =========================
+# INPUT DO USUÁRIO
+# =========================
+
+mes_referencia = int(input("Digite o mês da rodada (1-12): "))
+
+if mes_referencia < 1 or mes_referencia > 12:
+    raise ValueError("Mês inválido. Use um valor entre 1 e 12.")
+
+# =========================
 # FUNÇÕES AUXILIARES
 # =========================
 
-def get_or_create_rodada(cursor, ano, numero):
+def get_or_create_rodada(cursor, ano, numero, mes):
     cursor.execute(
         """
         SELECT id
@@ -43,11 +52,11 @@ def get_or_create_rodada(cursor, ano, numero):
 
     cursor.execute(
         """
-        INSERT INTO rodadas (ano, numero, status)
-        VALUES (%s, %s, 'encerrada')
+        INSERT INTO rodadas (ano, numero, mes, status)
+        VALUES (%s, %s, %s, 'encerrada')
         RETURNING id
         """,
-        (ano, numero)
+        (ano, numero, mes)
     )
     return cursor.fetchone()[0]
 
@@ -107,13 +116,19 @@ def importar_csv():
             for linha in leitor:
                 ano = int(linha["ano"])
                 rodada = int(linha["rodada"])
-                time_id = int(linha["cartola_time_id"])  # aqui é o ID do time
+                time_id_csv = int(linha["cartola_time_id"])
                 pontos = float(linha["pontos"])
                 patrimonio = float(linha["patrimonio"])
                 posicao = int(linha["posicao"])
 
-                rodada_id = get_or_create_rodada(cursor, ano, rodada)
-                time_id = get_time_id(cursor, time_id, ano)
+                rodada_id = get_or_create_rodada(
+                    cursor,
+                    ano,
+                    rodada,
+                    mes_referencia
+                )
+
+                time_id = get_time_id(cursor, time_id_csv, ano)
 
                 inserir_resultado(
                     cursor,

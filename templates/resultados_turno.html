@@ -1,8 +1,30 @@
 {% extends "base.html" %}
 
-{% block title %}Resultados Turno {% endblock %}
+{% block title %}Resultados por Turno{% endblock %}
 
 {% block content %}
-<h2>📊 Resultados  Turno </h2>
-<p>Em desenvolvimento...</p>
+<h1>🔁 Resultados por Turno</h1>
+
+<table class="tabela">
+    <thead>
+        <tr>
+            <th>#</th>
+            <th>Turno</th>
+            <th>Cartoleiro</th>
+            <th>Time</th>
+            <th>Pontos no Turno</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for turno, cartoleiro, time, pontos in resultados %}
+        <tr>
+            <td>{{ loop.index }}</td>
+            <td>{{ turno }}º</td>
+            <td>{{ cartoleiro }}</td>
+            <td>{{ time }}</td>
+            <td>{{ "%.2f"|format(pontos) }}</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
 {% endblock %}
