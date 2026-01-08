@@ -1,49 +1,24 @@
-<!DOCTYPE html>
-<html lang="pt-br">
-<head>
-    <meta charset="UTF-8">
-    <title>Participantes 2025</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
-</head>
-<body>
+{% extends "base.html" %}
 
-<div class="container">
-    <h1>👥 Participantes 2025</h1>
+{% block title %}Participantes 2025{% endblock %}
 
-    <ul class="menu menu-horizontal">
-    <li><a href="/">Home </a></li>
-    <li><a href="/participantes">Participantes 2025</a></li>
-    <li><a href="#">Resultados</a></li>
-    <li><a href="#">Classificação</a></li>
-    <li><a href="#">Mata-Matas</a></li>
-    <li><a href="#">Hall da Fama</a></li>
-    <li><a href="#">Anos Anteriores</a></li>
-    <li><a href="#">Prêmios</a></li>
-    <li><a href="#">Calendário</a></li>
-    <li><a href="#">A Direção</a></li>
-</ul>
+{% block content %}
+<h1>👥 Participantes 2025</h1>
 
-    <table class="tabela">
-        <thead>
-            <tr>
-                <th>Cartoleiro</th>
-                <th>Time</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for cartoleiro, time in participantes %}
-            <tr>
-                <td>{{ cartoleiro }}</td>
-                <td>{{ time }}</td>
-            </tr>
-            {% endfor %}
-        </tbody>
-    </table>
-
-    <p class="footer">
-        <a href="/">← Voltar para Home</a>
-    </p>
-</div>
-
-</body>
-</html>
+<table class="tabela">
+    <thead>
+        <tr>
+            <th>Cartoleiro</th>
+            <th>Time</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for cartoleiro, time in participantes %}
+        <tr>
+            <td>{{ cartoleiro }}</td>
+            <td>{{ time }}</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% endblock %}
