@@ -50,6 +50,36 @@ def participantes():
         participantes=participantes
     )
 
+@app.route("/resultados/rodada")
+def resultados_rodada():
+    return render_template("resultados_rodada.html")
+
+
+@app.route("/resultados/mensal")
+def resultados_mensal():
+    return render_template("resultados_mensal.html")
+
+
+@app.route("/resultados/turno")
+def resultados_turno():
+    return render_template("resultados_turno.html")
+
+
+@app.route("/resultados/cartoletas")
+def resultados_cartoletas():
+    return render_template("resultados_cartoletas.html")
+
+
+@app.route("/resultados/maior-pontuador")
+def resultados_maior_pontuador():
+    return render_template("resultados_maior_pontuador.html")
+
+
+@app.route("/resultados/rodada-a-rodada")
+def resultados_rodada_a_rodada():
+    return render_template("resultados_rodada_a_rodada.html")
+
+
 
 if __name__ == "__main__":
     app.run(debug=True)

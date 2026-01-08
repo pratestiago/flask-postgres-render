@@ -117,4 +117,53 @@ body {
     .tabela td {
         padding: 6px;
     }
+
+    .submenu {
+    position: static;
+    display: none;
+    padding: 0;
+}
+
+.dropdown.open .submenu {
+    display: block;
+}
+
+.dropdown > a {
+    cursor: pointer;
+}
+
+}
+
+
+.dropdown {
+    position: relative;
+}
+
+.submenu {
+    display: none;
+    position: absolute;
+    top: 100%;
+    left: 0;
+    background: #222;
+    list-style: none;
+    padding: 8px;
+    margin: 0;
+    border-radius: 6px;
+    min-width: 220px;
+    z-index: 1000;
+}
+
+.submenu li a {
+    display: block;
+    padding: 8px;
+    color: #fff;
+    text-decoration: none;
+}
+
+.submenu li a:hover {
+    background: #444;
+}
+
+.dropdown:hover .submenu {
+    display: block;
 }
