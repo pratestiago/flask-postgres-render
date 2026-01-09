@@ -174,17 +174,162 @@ def resultados_turno():
 
 @app.route("/resultados/cartoletas")
 def resultados_cartoletas():
-    return render_template("em_desenvolvimento.html")
+    conn = get_connection()
+    cursor = conn.cursor()
+
+    cursor.execute("""
+        SELECT
+            r.numero AS rodada,
+            c.nome AS cartoleiro,
+            t.nome_time,
+            rr.patrimonio,
+            rr.variacao_patrimonio
+        FROM rodadas r
+        JOIN resultado_rodada rr ON rr.rodada_id = r.id
+        JOIN times t ON t.id = rr.time_id
+        JOIN cartoleiros c ON c.id = t.cartoleiro_id
+        WHERE r.ano = 2025
+          AND r.numero = (
+              SELECT MAX(numero)
+              FROM rodadas
+              WHERE ano = 2025
+          )
+        ORDER BY rr.patrimonio DESC
+    """)
+
+    resultados = cursor.fetchall()
+
+    cursor.close()
+    conn.close()
+
+    rodada_atual = resultados[0][0] if resultados else None
+
+    return render_template(
+        "resultados_cartoletas.html",
+        rodada=rodada_atual,
+        resultados=resultados
+    )
+
 
 
 @app.route("/resultados/maior-pontuador")
 def resultados_maior_pontuador():
-    return render_template("em_desenvolvimento.html")
+    conn = get_connection()
+    cursor = conn.cursor()
+
+    cursor.execute("""
+        SELECT
+            r.numero AS rodada,
+            c.nome AS cartoleiro,
+            t.nome_time,
+            rr.pontos
+        FROM resultado_rodada rr
+        JOIN rodadas r ON r.id = rr.rodada_id
+        JOIN times t ON t.id = rr.time_id
+        JOIN cartoleiros c ON c.id = t.cartoleiro_id
+        WHERE r.ano = 2025
+        ORDER BY rr.pontos DESC
+        LIMIT 10
+    """)
+
+    resultados = cursor.fetchall()
+
+    cursor.close()
+    conn.close()
+
+    return render_template(
+        "resultados_maior_pontuador.html",
+        resultados=resultados
+    )
+
 
 
 @app.route("/resultados/rodada-a-rodada")
 def resultados_rodada_a_rodada():
-    return render_template("em_desenvolvimento.html")
+    conn = get_connection()
+    cursor = conn.cursor()
+
+    cursor.execute("""
+        SELECT
+            r.numero AS rodada,
+            c.nome AS cartoleiro,
+            t.nome_time,
+            rr.pontos
+        FROM resultado_rodada rr
+        JOIN rodadas r ON r.id = rr.rodada_id
+        JOIN times t ON t.id = rr.time_id
+        JOIN cartoleiros c ON c.id = t.cartoleiro_id
+        WHERE r.ano = 2025
+        ORDER BY c.nome, r.numero
+    """)
+
+    dados = cursor.fetchall()
+
+    cursor.close()
+    conn.close()
+
+    # -------------------------
+    # PROCESSAMENTO EM PYTHON
+    # -------------------------
+
+    rodadas_existentes = sorted({d[0] for d in dados})
+
+    tabela = {}
+
+    for rodada, cartoleiro, time, pontos in dados:
+        chave = (cartoleiro, time)
+
+        if chave not in tabela:
+            tabela[chave] = {
+                "cartoleiro": cartoleiro,
+                "time": time,
+                "rodadas": {},
+                "total": 0
+            }
+
+        tabela[chave]["rodadas"][rodada] = pontos
+        tabela[chave]["total"] += pontos
+
+    # Converter para lista e ordenar por total
+    ranking = list(tabela.values())
+    ranking.sort(key=lambda x: x["total"], reverse=True)
+
+    return render_template(
+        "resultados_rodada_a_rodada.html",
+        rodadas=rodadas_existentes,
+        ranking=ranking
+    )
+
+@app.route("/classificacao")
+def classificacao_geral():
+    conn = get_connection()
+    cursor = conn.cursor()
+
+    cursor.execute("""
+        SELECT
+            c.nome AS cartoleiro,
+            t.nome_time,
+            SUM(rr.pontos) AS total_pontos
+        FROM rodadas r
+        JOIN resultado_rodada rr ON rr.rodada_id = r.id
+        JOIN times t ON t.id = rr.time_id
+        JOIN cartoleiros c ON c.id = t.cartoleiro_id
+        WHERE r.ano = 2025
+        GROUP BY c.nome, t.nome_time
+        ORDER BY total_pontos DESC
+    """)
+
+    resultados = cursor.fetchall()
+
+    cursor.close()
+    conn.close()
+
+    return render_template(
+        "classificacao.html",
+        resultados=resultados
+    )
+
+
 
 # =========================
 # PÁGINA GENÉRICA

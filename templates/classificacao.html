@@ -1,25 +1,23 @@
 {% extends "base.html" %}
 
-{% block title %}Maiores Pontuadores{% endblock %}
+{% block title %}Classificação Geral{% endblock %}
 
 {% block content %}
-<h1>🔥 Top 10 — Maiores Pontuações do Ano</h1>
+<h1>🏆 Classificação Geral</h1>
 
 <table class="tabela">
     <thead>
         <tr>
             <th>#</th>
-            <th>Rodada</th>
             <th>Cartoleiro</th>
             <th>Time</th>
-            <th>Pontos</th>
+            <th>Pontos Totais</th>
         </tr>
     </thead>
     <tbody>
-        {% for rodada, cartoleiro, time, pontos in resultados %}
+        {% for cartoleiro, time, pontos in resultados %}
         <tr>
             <td>{{ loop.index }}</td>
-            <td>{{ rodada }}</td>
             <td>{{ cartoleiro }}</td>
             <td>{{ time }}</td>
             <td><strong>{{ "%.2f"|format(pontos) }}</strong></td>

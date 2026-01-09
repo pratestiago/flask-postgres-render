@@ -1,8 +1,36 @@
 {% extends "base.html" %}
 
-{% block title %}Resultados por Cartoletas{% endblock %}
+{% block title %}Cartoletas{% endblock %}
 
 {% block content %}
-<h2>📊 Resultados por Cartoletas</h2>
-<p>Em desenvolvimento...</p>
+<h1>💰 Cartoletas — Rodada {{ rodada }}</h1>
+
+<table class="tabela">
+    <thead>
+        <tr>
+            <th>#</th>
+            <th>Cartoleiro</th>
+            <th>Time</th>
+            <th>Cartoletas</th>
+            <th>Variação</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for rodada, cartoleiro, time, patrimonio, variacao in resultados %}
+        <tr>
+            <td>{{ loop.index }}</td>
+            <td>{{ cartoleiro }}</td>
+            <td>{{ time }}</td>
+            <td>{{ "%.2f"|format(patrimonio) }}</td>
+            <td>
+                {% if variacao is not none %}
+                    {{ "%.2f"|format(variacao) }}
+                {% else %}
+                    —
+                {% endif %}
+            </td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
 {% endblock %}
