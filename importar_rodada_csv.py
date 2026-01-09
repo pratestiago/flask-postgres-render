@@ -36,29 +36,36 @@ if mes_referencia < 1 or mes_referencia > 12:
 # =========================
 # FUNÇÕES AUXILIARES
 # =========================
-
 def get_or_create_rodada(cursor, ano, numero, mes):
-    cursor.execute(
-        """
-        SELECT id
+    cursor.execute("""
+        SELECT id, mes
         FROM rodadas
         WHERE ano = %s AND numero = %s
-        """,
-        (ano, numero)
-    )
-    row = cursor.fetchone()
-    if row:
-        return row[0]
+    """, (ano, numero))
 
-    cursor.execute(
-        """
+    row = cursor.fetchone()
+
+    if row:
+        rodada_id, mes_atual = row
+
+        # Atualiza o mês se for diferente
+        if mes_atual != mes:
+            cursor.execute("""
+                UPDATE rodadas
+                SET mes = %s
+                WHERE id = %s
+            """, (mes, rodada_id))
+
+        return rodada_id
+
+    cursor.execute("""
         INSERT INTO rodadas (ano, numero, mes, status)
         VALUES (%s, %s, %s, 'encerrada')
         RETURNING id
-        """,
-        (ano, numero, mes)
-    )
+    """, (ano, numero, mes))
+
     return cursor.fetchone()[0]
+
 
 
 def get_time_id(cursor, time_id, temporada):

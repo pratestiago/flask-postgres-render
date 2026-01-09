@@ -121,8 +121,13 @@ def resultados_mensal():
         JOIN times t ON t.id = rr.time_id
         JOIN cartoleiros c ON c.id = t.cartoleiro_id
         WHERE r.ano = 2025
+          AND r.mes = (
+              SELECT MAX(mes)
+              FROM rodadas
+              WHERE ano = 2025
+          )
         GROUP BY r.mes, c.nome, t.nome_time
-        ORDER BY r.mes, pontos_mes DESC
+        ORDER BY pontos_mes DESC
     """)
 
     resultados = cursor.fetchall()
@@ -130,10 +135,14 @@ def resultados_mensal():
     cursor.close()
     conn.close()
 
+    mes_atual = resultados[0][0] if resultados else None
+
     return render_template(
         "resultados_mensal.html",
-        resultados=resultados
+        resultados=resultados,
+        mes=mes_atual
     )
+
 
 
 
