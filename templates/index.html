@@ -3,17 +3,111 @@
 {% block title %}Home{% endblock %}
 
 {% block content %}
+
+<h1>🏆 Superliga dos Amigos</h1>
+
 <p>
-   <br>
-   <br>
-   <br>
-   <br>
-   <br>
-   <h2>Desde 2008 a liga mais chamarmosa do Cartola FC Brasil.</h2>
-
-
-
-
-
+    Desde 2008, a liga mais charmosa do Cartola FC Brasil.
 </p>
+
+{% if vencedor_rodada %}
+<h2>🔥 Vencedor da Rodada {{ vencedor_rodada[0] }}</h2>
+<table class="tabela">
+    <thead>
+        <tr>
+            <th>Cartoleiro</th>
+            <th>Time</th>
+            <th>Pontuação</th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr>
+            <td>{{ vencedor_rodada[1] }}</td>
+            <td>{{ vencedor_rodada[2] }}</td>
+            <td><strong>{{ "%.2f"|format(vencedor_rodada[3]) }}</strong></td>
+        </tr>
+    </tbody>
+</table>
+{% endif %}
+
+{% if lider_mes %}
+<h2>📅 Líder do Mês {{ lider_mes[0] }}</h2>
+<table class="tabela">
+    <thead>
+        <tr>
+            <th>Cartoleiro</th>
+            <th>Time</th>
+            <th>Pontos no Mês</th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr>
+            <td>{{ lider_mes[1] }}</td>
+            <td>{{ lider_mes[2] }}</td>
+            <td><strong>{{ "%.2f"|format(lider_mes[3]) }}</strong></td>
+        </tr>
+    </tbody>
+</table>
+{% endif %}
+
+{% if lider_turno %}
+<h2>🔁 Líder do Turno {{ lider_turno[0] }}</h2>
+<table class="tabela">
+    <thead>
+        <tr>
+            <th>Cartoleiro</th>
+            <th>Time</th>
+            <th>Pontos no Turno</th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr>
+            <td>{{ lider_turno[1] }}</td>
+            <td>{{ lider_turno[2] }}</td>
+            <td><strong>{{ "%.2f"|format(lider_turno[3]) }}</strong></td>
+        </tr>
+    </tbody>
+</table>
+{% endif %}
+
+{% if lider_cartoletas %}
+<h2>💰 Líder de Cartoletas – Rodada {{ lider_cartoletas[0] }}</h2>
+<table class="tabela">
+    <thead>
+        <tr>
+            <th>Cartoleiro</th>
+            <th>Time</th>
+            <th>Patrimônio</th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr>
+            <td>{{ lider_cartoletas[1] }}</td>
+            <td>{{ lider_cartoletas[2] }}</td>
+            <td><strong>C$ {{ "%.2f"|format(lider_cartoletas[3]) }}</strong></td>
+        </tr>
+    </tbody>
+</table>
+{% endif %}
+
+{% if lider_campeonato %}
+<h2>🥇 Líder do Campeonato</h2>
+<table class="tabela">
+    <thead>
+        <tr>
+            <th>Cartoleiro</th>
+            <th>Time</th>
+            <th>Pontos Totais</th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr>
+            <td>{{ lider_campeonato[0] }}</td>
+            <td>{{ lider_campeonato[1] }}</td>
+            <td><strong>{{ "%.2f"|format(lider_campeonato[2]) }}</strong></td>
+        </tr>
+    </tbody>
+</table>
+{% endif %}
+
 {% endblock %}

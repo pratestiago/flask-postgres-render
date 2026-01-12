@@ -1,4 +1,4 @@
-from flask import Flask, render_template
+from flask import Flask, render_template, abort
 import psycopg2
 import os
 
@@ -26,36 +26,144 @@ def get_connection():
 # =========================
 # ROTAS BÁSICAS
 # =========================
-
 @app.route("/")
 def home():
-    return render_template("index.html")
-
-
-@app.route("/participantes")
-def participantes():
     conn = get_connection()
     cursor = conn.cursor()
 
+    # Vencedor da rodada
     cursor.execute("""
         SELECT
-            c.nome AS cartoleiro,
-            t.nome_time
-        FROM cartoleiros c
-        JOIN times t ON t.cartoleiro_id = c.id
-        WHERE t.temporada = 2025
-        ORDER BY c.nome, t.nome_time
+            r.numero,
+            c.nome,
+            t.nome_time,
+            rr.pontos
+        FROM rodadas r
+        JOIN resultado_rodada rr ON rr.rodada_id = r.id
+        JOIN times t ON t.id = rr.time_id
+        JOIN cartoleiros c ON c.id = t.cartoleiro_id
+        WHERE r.ano = 2025
+          AND r.numero = (
+              SELECT MAX(numero)
+              FROM rodadas
+              WHERE ano = 2025
+          )
+        ORDER BY rr.pontos DESC
+        LIMIT 1
     """)
+    vencedor_rodada = cursor.fetchone()
 
-    participantes = cursor.fetchall()
+    # Líder do mês
+    cursor.execute("""
+        SELECT
+            r.mes,
+            c.nome,
+            t.nome_time,
+            SUM(rr.pontos)
+        FROM rodadas r
+        JOIN resultado_rodada rr ON rr.rodada_id = r.id
+        JOIN times t ON t.id = rr.time_id
+        JOIN cartoleiros c ON c.id = t.cartoleiro_id
+        WHERE r.ano = 2025
+          AND r.mes = (
+              SELECT MAX(mes)
+              FROM rodadas
+              WHERE ano = 2025
+          )
+        GROUP BY r.mes, c.nome, t.nome_time
+        ORDER BY SUM(rr.pontos) DESC
+        LIMIT 1
+    """)
+    lider_mes = cursor.fetchone()
+
+    # Líder do turno
+    cursor.execute("""
+        SELECT
+            turno,
+            c.nome,
+            t.nome_time,
+            SUM(rr.pontos)
+        FROM (
+            SELECT
+                rr.*,
+                CASE
+                    WHEN r.numero BETWEEN 1 AND 19 THEN 1
+                    ELSE 2
+                END AS turno
+            FROM resultado_rodada rr
+            JOIN rodadas r ON r.id = rr.rodada_id
+            WHERE r.ano = 2025
+        ) rr
+        JOIN times t ON t.id = rr.time_id
+        JOIN cartoleiros c ON c.id = t.cartoleiro_id
+        WHERE turno = (
+            SELECT
+                CASE
+                    WHEN MAX(numero) <= 19 THEN 1
+                    ELSE 2
+                END
+            FROM rodadas
+            WHERE ano = 2025
+        )
+        GROUP BY turno, c.nome, t.nome_time
+        ORDER BY SUM(rr.pontos) DESC
+        LIMIT 1
+    """)
+    lider_turno = cursor.fetchone()
+
+        # Líder de cartoletas (rodada atual)
+    cursor.execute("""
+        SELECT
+            r.numero,
+            c.nome,
+            t.nome_time,
+            rr.patrimonio
+        FROM rodadas r
+        JOIN resultado_rodada rr ON rr.rodada_id = r.id
+        JOIN times t ON t.id = rr.time_id
+        JOIN cartoleiros c ON c.id = t.cartoleiro_id
+        WHERE r.ano = 2025
+          AND r.numero = (
+              SELECT MAX(numero)
+              FROM rodadas
+              WHERE ano = 2025
+          )
+        ORDER BY rr.patrimonio DESC
+        LIMIT 1
+    """)
+    lider_cartoletas = cursor.fetchone()
+
+
+    # Líder do campeonato
+    cursor.execute("""
+        SELECT
+            c.nome,
+            t.nome_time,
+            SUM(rr.pontos)
+        FROM resultado_rodada rr
+        JOIN rodadas r ON r.id = rr.rodada_id
+        JOIN times t ON t.id = rr.time_id
+        JOIN cartoleiros c ON c.id = t.cartoleiro_id
+        WHERE r.ano = 2025
+        GROUP BY c.nome, t.nome_time
+        ORDER BY SUM(rr.pontos) DESC
+        LIMIT 1
+    """)
+    lider_campeonato = cursor.fetchone()
 
     cursor.close()
     conn.close()
 
     return render_template(
-        "participantes.html",
-        participantes=participantes
+        "index.html",
+        vencedor_rodada=vencedor_rodada,
+        lider_mes=lider_mes,
+        lider_turno=lider_turno,
+        lider_cartoletas=lider_cartoletas,
+        lider_campeonato=lider_campeonato
     )
+
+
 
 # =========================
 # RESULTADOS - RODADA ATUAL
@@ -337,6 +445,80 @@ def classificacao_geral():
         "classificacao.html",
         resultados=resultados
     )
+
+@app.route("/series")
+def series_home():
+    conn = get_connection()
+    cursor = conn.cursor()
+
+    cursor.execute("""
+        SELECT id, nome
+        FROM divisoes
+        ORDER BY nivel
+    """)
+    divisoes = cursor.fetchall()
+
+    cursor.close()
+    conn.close()
+
+    return render_template(
+        "series_home.html",
+        divisoes=divisoes
+    )
+
+
+@app.route("/series/<int:divisao_id>")
+def series(divisao_id):
+    conn = get_connection()
+    cursor = conn.cursor()
+
+    # Buscar nome da divisão
+    cursor.execute("""
+    SELECT nome
+    FROM divisoes
+    WHERE id = %s
+    """, (divisao_id,))
+    divisao = cursor.fetchone()
+
+
+    if not divisao:
+        cursor.close()
+        conn.close()
+        abort(404)
+
+    # Classificação da série
+    cursor.execute("""
+        SELECT
+            c.nome AS cartoleiro,
+            t.nome_time,
+            SUM(rr.pontos) AS total_pontos
+        FROM resultado_rodada rr
+        JOIN rodadas r ON r.id = rr.rodada_id
+        JOIN times t ON t.id = rr.time_id
+        JOIN cartoleiros c ON c.id = t.cartoleiro_id
+        JOIN times_divisoes td 
+            ON td.time_id = t.id
+           AND td.temporada = 2025
+        WHERE r.ano = 2025
+          AND td.divisao_id = %s
+        GROUP BY c.nome, t.nome_time
+        ORDER BY total_pontos DESC
+    """, (divisao_id,))
+
+    classificacao = cursor.fetchall()
+
+    cursor.close()
+    conn.close()
+
+    return render_template(
+        "series.html",
+        divisao_nome=divisao[0],
+        classificacao=classificacao
+    )
+
+
+
+
 
 
 

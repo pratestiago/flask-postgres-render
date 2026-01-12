@@ -1,0 +1,15 @@
+{% extends "base.html" %}
+
+{% block title %}Séries{% endblock %}
+
+{% block content %}
+<h1>🏟️ Séries da Liga</h1>
+
+<ul class="menu menu-horizontal">
+    {% for id, nome in divisoes %}
+        <li>
+            <a href="/series/{{ id }}">{{ nome }}</a>
+        </li>
+    {% endfor %}
+</ul>
+{% endblock %}
