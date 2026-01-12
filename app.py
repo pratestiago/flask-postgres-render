@@ -163,6 +163,30 @@ def home():
         lider_campeonato=lider_campeonato
     )
 
+@app.route("/participantes")
+def participantes():
+    conn = get_connection()
+    cursor = conn.cursor()
+
+    cursor.execute("""
+        SELECT
+            c.nome AS cartoleiro,
+            t.nome_time
+        FROM cartoleiros c
+        JOIN times t ON t.cartoleiro_id = c.id
+        WHERE t.temporada = 2025
+        ORDER BY c.nome, t.nome_time
+    """)
+
+    participantes = cursor.fetchall()
+
+    cursor.close()
+    conn.close()
+
+    return render_template(
+        "participantes.html",
+        participantes=participantes
+    )
 
 
 # =========================

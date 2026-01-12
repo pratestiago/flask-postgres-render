@@ -167,3 +167,74 @@ body {
 .dropdown:hover .submenu {
     display: block;
 }
+
+/* =========================
+   HOME / DASHBOARD
+========================= */
+
+.home-header {
+    text-align: center;
+    margin-bottom: 30px;
+}
+
+.home-header h1 {
+    margin-bottom: 8px;
+}
+
+.home-header p {
+    color: #555;
+    font-size: 15px;
+}
+
+/* GRID DE CARDS */
+.dashboard {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+    gap: 20px;
+}
+
+/* CARD */
+.card {
+    background: #ffffff;
+    border-radius: 10px;
+    padding: 16px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+    transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 8px 18px rgba(0, 0, 0, 0.12);
+}
+
+.card h2 {
+    font-size: 18px;
+    margin-bottom: 12px;
+    border-bottom: 1px solid #eee;
+    padding-bottom: 6px;
+}
+
+/* CARD DE DESTAQUE */
+.card {
+    background: #ffffff;
+    border-radius: 10px;
+    padding: 16px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+    transition: transform 0.2s, box-shadow 0.2s;
+    border-left: 6px solid #007bff; /* 👈 agora todos */
+}
+
+
+/* TABELA DENTRO DO CARD */
+.card .tabela {
+    margin-top: 10px;
+}
+
+.card .tabela th {
+    background: #f5f7fa;
+    font-size: 14px;
+}
+
+.card .tabela td {
+    font-size: 14px;
+}
