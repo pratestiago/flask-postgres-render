@@ -52,3 +52,161 @@ JOIN divisoes d ON d.id = td.divisao_id
 WHERE td.temporada = 2025
 GROUP BY d.nome, d.nivel
 ORDER BY d.nivel;
+
+
+CREATE TABLE competicoes (
+    id SERIAL PRIMARY KEY,
+    nome VARCHAR(100) NOT NULL,
+    ano INTEGER NOT NULL,
+    tipo VARCHAR(50) NOT NULL,
+    rodada_inicio INTEGER NOT NULL DEFAULT 2,
+    status VARCHAR(50) NOT NULL,
+    rodada_atual INTEGER,
+    criada_em TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE (nome, ano)
+);
+
+CREATE TABLE competicao_times (
+    id SERIAL PRIMARY KEY,
+    competicao_id INTEGER NOT NULL,
+    time_id INTEGER NOT NULL,
+    ranking_inicial INTEGER NOT NULL,
+    status VARCHAR(20) NOT NULL DEFAULT 'vivo',
+    rodada_eliminacao INTEGER,
+    classificacao_final INTEGER,
+    CONSTRAINT fk_competicao
+        FOREIGN KEY (competicao_id)
+        REFERENCES competicoes (id)
+        ON DELETE CASCADE,
+    CONSTRAINT fk_time
+        FOREIGN KEY (time_id)
+        REFERENCES times (id),
+    UNIQUE (competicao_id, time_id)
+);
+
+CREATE TABLE competicao_ranking_snapshot (
+    id SERIAL PRIMARY KEY,
+    competicao_id INTEGER NOT NULL,
+    rodada INTEGER NOT NULL,
+    time_id INTEGER NOT NULL,
+    pontuacao NUMERIC(6,2) NOT NULL,
+    posicao INTEGER NOT NULL,
+    CONSTRAINT fk_competicao_snapshot
+        FOREIGN KEY (competicao_id)
+        REFERENCES competicoes (id)
+        ON DELETE CASCADE,
+    CONSTRAINT fk_time_snapshot
+        FOREIGN KEY (time_id)
+        REFERENCES times (id),
+    UNIQUE (competicao_id, time_id)
+);
+
+CREATE TABLE competicao_fases (
+    id SERIAL PRIMARY KEY,
+    competicao_id INTEGER NOT NULL,
+    nome_fase VARCHAR(50) NOT NULL,
+    ordem INTEGER NOT NULL,
+    qtd_times_inicio INTEGER NOT NULL,
+    qtd_times_fim INTEGER NOT NULL,
+    rodada INTEGER NOT NULL,
+    status VARCHAR(30) NOT NULL,
+    CONSTRAINT fk_competicao_fase
+        FOREIGN KEY (competicao_id)
+        REFERENCES competicoes (id)
+        ON DELETE CASCADE
+);
+
+CREATE TABLE competicao_confrontos (
+    id SERIAL PRIMARY KEY,
+    competicao_id INTEGER NOT NULL,
+    fase_id INTEGER NOT NULL,
+    rodada INTEGER NOT NULL,
+    time_a_id INTEGER NOT NULL,
+    time_b_id INTEGER NOT NULL,
+    ranking_a INTEGER NOT NULL,
+    ranking_b INTEGER NOT NULL,
+    pontuacao_a NUMERIC(6,2),
+    pontuacao_b NUMERIC(6,2),
+    vencedor_id INTEGER,
+    perdedor_id INTEGER,
+    status VARCHAR(20) NOT NULL DEFAULT 'criado',
+    CONSTRAINT fk_competicao_confronto
+        FOREIGN KEY (competicao_id)
+        REFERENCES competicoes (id)
+        ON DELETE CASCADE,
+    CONSTRAINT fk_fase
+        FOREIGN KEY (fase_id)
+        REFERENCES competicao_fases (id)
+        ON DELETE CASCADE,
+    CONSTRAINT fk_time_a
+        FOREIGN KEY (time_a_id)
+        REFERENCES times (id),
+    CONSTRAINT fk_time_b
+        FOREIGN KEY (time_b_id)
+        REFERENCES times (id)
+);
+
+CREATE TABLE competicao_rodadas_processadas (
+    id SERIAL PRIMARY KEY,
+    competicao_id INTEGER NOT NULL,
+    rodada INTEGER NOT NULL,
+    processada_em TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT fk_competicao_processada
+        FOREIGN KEY (competicao_id)
+        REFERENCES competicoes (id)
+        ON DELETE CASCADE,
+    UNIQUE (competicao_id, rodada)
+);
+
+
+
+INSERT INTO competicoes (
+    nome,
+    ano,
+    tipo,
+    rodada_inicio,
+    status
+)
+VALUES (
+    'Copa Brasil',
+    2025,
+    'mata_morre',
+    2,
+    'aguardando_rodada_2'
+);
+
+TRUNCATE TABLE rodadas RESTART IDENTITY CASCADE;
+
+select * from rodadas;
+
+select * from competicoes;
+SELECT * 
+FROM competicoes
+WHERE nome = 'Copa Brasil'
+  AND ano = 2025;
+
+
+SELECT * FROM competicao_ranking_snapshot WHERE competicao_id = 1 ORDER BY posicao;
+SELECT * FROM competicao_times WHERE competicao_id = 1 ORDER BY ranking_inicial;
+SELECT status, rodada_atual FROM competicoes WHERE id = 1;
+
+TRUNCATE competicao_confrontos CASCADE;
+TRUNCATE competicao_fases CASCADE;
+TRUNCATE competicao_ranking_snapshot CASCADE;
+TRUNCATE competicao_times CASCADE;
+TRUNCATE competicao_rodadas_processadas CASCADE;
+
+UPDATE competicoes
+SET status = 'aguardando_rodada_2',
+    rodada_atual = NULL
+WHERE id = 1;
+
+SELECT COUNT(*)
+FROM competicao_times
+WHERE competicao_id = 1
+  AND status = 'vivo';
+
+  SELECT COUNT(*)
+FROM competicao_times
+WHERE competicao_id = 1
+  AND status = 'eliminado';

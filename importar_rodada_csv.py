@@ -1,6 +1,7 @@
 import csv
 import psycopg2
 import os
+from copa_brasil import processar_copa_brasil
 
 # =========================
 # CONFIGURAÇÃO DO BANCO
@@ -120,9 +121,17 @@ def importar_csv():
         with open(CSV_PATH, newline="", encoding="utf-8") as arquivo:
             leitor = csv.DictReader(arquivo)
 
+            ano_importado = None
+            rodada_importada = None
+
+
             for linha in leitor:
                 ano = int(linha["ano"])
                 rodada = int(linha["rodada"])
+
+                ano_importado = ano
+                rodada_importada = rodada
+
                 time_id_csv = int(linha["cartola_time_id"])
                 pontos = float(linha["pontos"])
                 patrimonio = float(linha["patrimonio"])
@@ -148,6 +157,12 @@ def importar_csv():
 
         conn.commit()
         print("✅ CSV importado com sucesso!")
+        print(f"Ano importado: {ano_importado}")
+        print(f"Rodada importada: {rodada_importada}")
+
+        processar_copa_brasil(conn, ano_importado, rodada_importada)
+
+
 
     except Exception as erro:
         conn.rollback()
