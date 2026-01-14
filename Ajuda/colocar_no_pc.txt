@@ -210,3 +210,57 @@ WHERE competicao_id = 1
 FROM competicao_times
 WHERE competicao_id = 1
   AND status = 'eliminado';
+
+
+
+  TRUNCATE TABLE rodadas RESTART IDENTITY CASCADE;
+
+select * from rodadas;
+
+select * from competicoes;
+SELECT * 
+FROM competicoes
+WHERE nome = 'Copa Brasil'
+  AND ano = 2025;
+
+
+SELECT * FROM competicao_ranking_snapshot WHERE competicao_id = 1 ORDER BY posicao;
+SELECT * FROM competicao_times WHERE competicao_id = 1 ORDER BY ranking_inicial;
+SELECT status, rodada_atual FROM competicoes WHERE id = 1;
+
+TRUNCATE competicao_confrontos RESTART IDENTITY  CASCADE;
+TRUNCATE competicao_fases RESTART IDENTITY CASCADE;
+TRUNCATE competicao_ranking_snapshot RESTART IDENTITY CASCADE;
+TRUNCATE competicao_times RESTART IDENTITY CASCADE;
+TRUNCATE competicao_rodadas_processadas RESTART IDENTITY  CASCADE;
+
+UPDATE competicoes
+SET status = 'aguardando_rodada_2',
+    rodada_atual = NULL
+WHERE id = 1;
+
+SELECT COUNT(*)
+FROM competicao_times
+WHERE competicao_id = 1
+  AND status = 'vivo';
+
+  SELECT COUNT(*)
+FROM competicao_times
+WHERE competicao_id = 1
+  AND status = 'eliminado';
+
+select * from competicao_confrontos
+
+DELETE FROM competicao_rodadas_processadas
+WHERE rodada = 4;
+
+
+SELECT COUNT(*)
+FROM competicao_times
+WHERE status = 'vivo';
+
+
+
+
+
+
