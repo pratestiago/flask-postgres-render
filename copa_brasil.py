@@ -129,6 +129,45 @@ def criar_confrontos_fase_principal(
         ))
 
 # =========================
+# CRIAR PRÓXIMA FASE (MODELO B)
+# =========================
+
+def criar_proxima_fase(
+    cursor,
+    competicao_id,
+    rodada_atual
+):
+    """
+    Cria os confrontos da próxima fase,
+    deixando-os como 'criado'.
+    """
+    fase_atual = obter_fase_principal(rodada_atual)
+    fase_proxima = obter_fase_principal(rodada_atual + 1)
+
+    if not fase_atual or not fase_proxima:
+        print('[Copa Brasil] Não existe próxima fase a ser criada')
+        return
+
+    nome_fase, _, _, _ = fase_atual
+    prox_nome, qtd_ini, qtd_fim, ordem = fase_proxima
+
+    print(
+        f'[Copa Brasil] Criando próxima fase: '
+        f'{prox_nome} (rodada {rodada_atual + 1})'
+    )
+
+    criar_confrontos_fase_principal(
+        cursor,
+        competicao_id,
+        prox_nome,
+        rodada_atual + 1,
+        qtd_ini,
+        qtd_fim,
+        ordem
+    )
+
+
+# =========================
 # RESOLVER FASE PRINCIPAL
 # =========================
 
@@ -146,25 +185,50 @@ def resolver_fase_principal(
             cc.id,
             cc.time_a_id,
             cc.time_b_id,
+            cc.origem_time_a_confronto_id,
+            cc.origem_time_b_confronto_id,
             cc.ranking_a,
             cc.ranking_b
         FROM competicao_confrontos cc
         JOIN competicao_fases cf ON cf.id = cc.fase_id
         WHERE cc.competicao_id = %s
-          AND cc.rodada = %s
-          AND cf.nome_fase = %s
-          AND cc.status = 'criado'
+        AND cc.rodada = %s
+        AND cf.nome_fase = %s
+        AND cc.status = 'criado'
     """, (competicao_id, rodada, nome_fase))
+
+
 
     confrontos = cursor.fetchall()
 
     for (
-        confronto_id,
-        time_a_id,
-        time_b_id,
-        ranking_a,
-        ranking_b
+    confronto_id,
+    time_a_id,
+    time_b_id,
+    origem_a_id,
+    origem_b_id,
+    ranking_a,
+    ranking_b
     ) in confrontos:
+        
+                # Resolver TIME A
+        if time_a_id is None and origem_a_id is not None:
+            cursor.execute("""
+                SELECT vencedor_id
+                FROM competicao_confrontos
+                WHERE id = %s
+            """, (origem_a_id,))
+            time_a_id = cursor.fetchone()[0]
+
+        # Resolver TIME B
+        if time_b_id is None and origem_b_id is not None:
+            cursor.execute("""
+                SELECT vencedor_id
+                FROM competicao_confrontos
+                WHERE id = %s
+            """, (origem_b_id,))
+            time_b_id = cursor.fetchone()[0]
+
 
         cursor.execute("""
             SELECT rr.time_id, rr.pontos
@@ -563,12 +627,14 @@ def processar_copa_brasil(conn, ano, numero_rodada):
             time_a_id, ranking_a, _ = time_a
             time_b_id, ranking_b, _ = time_b
 
+            ordem_na_fase = i + 1  # 👈 AJUSTE 1 (OBRIGATÓRIO)
+
             # Criar fase se não existir
             cursor.execute("""
                 SELECT id
                 FROM competicao_fases
                 WHERE competicao_id = %s
-                  AND nome_fase = 'repescagem'
+                AND nome_fase = 'repescagem'
             """, (competicao_id,))
             fase = cursor.fetchone()
 
@@ -599,16 +665,18 @@ def processar_copa_brasil(conn, ano, numero_rodada):
                     competicao_id,
                     fase_id,
                     rodada,
+                    ordem_na_fase,
                     time_a_id,
                     time_b_id,
                     ranking_a,
                     ranking_b,
                     status
                 )
-                VALUES (%s, %s, 3, %s, %s, %s, %s, 'criado')
+                VALUES (%s, %s, 3, %s, %s, %s, %s, %s, 'criado')
             """, (
                 competicao_id,
                 fase_id,
+                ordem_na_fase,
                 time_a_id,
                 time_b_id,
                 ranking_a,
@@ -617,6 +685,150 @@ def processar_copa_brasil(conn, ano, numero_rodada):
 
         conn.commit()
         print('[Copa Brasil] Confrontos da REPESCAGEM criados com sucesso')
+
+        # ======================================================
+        # CRIAR CONFRONTOS DA RODADA 4 (16-AVOS) ANTECIPADAMENTE
+        # ======================================================
+
+        # -----------------------------
+        # BUSCAR TIMES QUE PASSAM DIRETO
+        # -----------------------------
+        cursor.execute("""
+            SELECT
+                ct.time_id,
+                ct.ranking_inicial,
+                t.nome_time
+            FROM competicao_times ct
+            JOIN times t ON t.id = ct.time_id
+            WHERE ct.competicao_id = %s
+            AND ct.ranking_inicial <= %s
+            ORDER BY ct.ranking_inicial
+        """, (competicao_id, times_direto))
+
+        times_diretos_lista = cursor.fetchall()
+
+        # -----------------------------
+        # SEPARAR EM GRUPOS
+        # -----------------------------
+        times_top = times_diretos_lista[:17]     # enfrentarão repescagem
+        times_meio = times_diretos_lista[17:]    # direto x direto
+
+        # -----------------------------
+        # CRIAR FASE 16-AVOS (RODADA 4)
+        # -----------------------------
+        cursor.execute("""
+            SELECT id
+            FROM competicao_fases
+            WHERE competicao_id = %s
+            AND nome_fase = '16-avos'
+        """, (competicao_id,))
+
+        fase = cursor.fetchone()
+
+        if fase:
+            fase_16_id = fase[0]
+        else:
+            cursor.execute("""
+                INSERT INTO competicao_fases (
+                    competicao_id,
+                    nome_fase,
+                    ordem,
+                    qtd_times_inicio,
+                    qtd_times_fim,
+                    rodada,
+                    status
+                )
+                VALUES (%s, '16-avos', 2, 64, 32, 4, 'em_andamento')
+                RETURNING id
+            """, (competicao_id,))
+            fase_16_id = cursor.fetchone()[0]
+
+        # -----------------------------
+        # DIRETO × DIRETO (15 CONFRONTOS)
+        # -----------------------------
+        ordem_confronto = 1
+        total_meio = len(times_meio)
+
+        for i in range(total_meio // 2):
+            time_a = times_meio[i]
+            time_b = times_meio[total_meio - 1 - i]
+
+            time_a_id, ranking_a, _ = time_a
+            time_b_id, ranking_b, _ = time_b
+
+            cursor.execute("""
+                INSERT INTO competicao_confrontos (
+                    competicao_id,
+                    fase_id,
+                    rodada,
+                    ordem_na_fase,
+                    time_a_id,
+                    time_b_id,
+                    ranking_a,
+                    ranking_b,
+                    status
+                )
+                VALUES (%s, %s, 4, %s, %s, %s, %s, %s, 'criado')
+            """, (
+                competicao_id,
+                fase_16_id,
+                ordem_confronto,
+                time_a_id,
+                time_b_id,
+                ranking_a,
+                ranking_b
+            ))
+
+            ordem_confronto += 1
+
+        # -----------------------------
+        # DIRETO × REPESCAGEM (17)
+        # -----------------------------
+        cursor.execute("""
+            SELECT cc.id, cc.ordem_na_fase
+            FROM competicao_confrontos cc
+            JOIN competicao_fases cf ON cf.id = cc.fase_id
+            WHERE cc.competicao_id = %s
+            AND cf.nome_fase = 'repescagem'
+            ORDER BY cc.ordem_na_fase
+        """, (competicao_id,))
+
+        repescagens = cursor.fetchall()
+
+        for i in range(17):
+            time_direto = times_top[i]
+            confronto_repescagem = repescagens[16 - i]
+
+            time_id, ranking_direto, _ = time_direto
+            confronto_origem_id, _ = confronto_repescagem
+
+            cursor.execute("""
+                INSERT INTO competicao_confrontos (
+                    competicao_id,
+                    fase_id,
+                    rodada,
+                    ordem_na_fase,
+                    time_a_id,
+                    origem_time_b_confronto_id,
+                    ranking_a,
+                    ranking_b,
+                    status
+                )
+                VALUES (%s, %s, 4, %s, %s, %s, %s, NULL, 'criado')
+            """, (
+                competicao_id,
+                fase_16_id,
+                ordem_confronto,
+                time_id,
+                confronto_origem_id,
+                ranking_direto
+            ))
+
+            ordem_confronto += 1
+
+        conn.commit()
+        print('[Copa Brasil] Confrontos da RODADA 4 criados antecipadamente')
+
 
     # ======================================================
     # RODADA 3 — RESOLVER REPESCAGEM
@@ -692,20 +904,9 @@ def processar_copa_brasil(conn, ano, numero_rodada):
     # RODADA 4 — 16-AVOS (CRIAR + RESOLVER)
     # ======================================================
     elif numero_rodada == 4:
-        print('[Copa Brasil] Fase 16-avos — criando e resolvendo')
+        print('[Copa Brasil] Fase 16-avos — resolvendo (pré-criada)')
 
-        fase = obter_fase_principal(numero_rodada)
-        nome_fase, qtd_ini, qtd_fim, ordem = fase
-
-        criar_confrontos_fase_principal(
-            cursor,
-            competicao_id,
-            nome_fase,
-            numero_rodada,
-            qtd_ini,
-            qtd_fim,
-            ordem
-        )
+        nome_fase = '16-avos'
 
         resolver_fase_principal(
             cursor,
@@ -714,6 +915,7 @@ def processar_copa_brasil(conn, ano, numero_rodada):
             numero_rodada,
             ano
         )
+
 
         cursor.execute("""
             INSERT INTO competicao_rodadas_processadas (
@@ -731,6 +933,18 @@ def processar_copa_brasil(conn, ano, numero_rodada):
 
         conn.commit()
         print('[Copa Brasil] Fase 16-avos concluída (64 → 32)')
+        
+
+        # 🔮 MODELO B — criar a próxima fase antecipadamente
+        criar_proxima_fase(
+            cursor,
+            competicao_id,
+            numero_rodada
+        )
+        conn.commit()
+        print('[Copa Brasil] Próxima fase (oitavas) criada antecipadamente')
+
+        
         return
     
         # ======================================================
@@ -819,6 +1033,16 @@ def processar_copa_brasil(conn, ano, numero_rodada):
             criar_finalissima(cursor, competicao_id)
             conn.commit()
             print('[Copa Brasil] Finalíssima (rodada 9) criada')
+
+            # 🔮 Criar próxima fase antecipadamente
+        criar_proxima_fase(
+            cursor,
+            competicao_id,
+            numero_rodada
+        )
+        conn.commit()
+        print('[Copa Brasil] Próxima fase criada antecipadamente')
+     
 
         return
 

@@ -1,0 +1,19 @@
+{% extends "base.html" %}
+
+{% block title %}Mata-Matas{% endblock %}
+
+{% block content %}
+<h1>🏆 Mata-Matas</h1>
+
+<ul class="menu menu-horizontal">
+    {% for id, nome in competicoes %}
+        <li>
+            {% if id == 1 %}
+                <a href="/mata-matas/{{ id }}">{{ nome }}</a>
+            {% else %}
+                <a href="/em-desenvolvimento">{{ nome }}</a>
+            {% endif %}
+        </li>
+    {% endfor %}
+</ul>
+{% endblock %}

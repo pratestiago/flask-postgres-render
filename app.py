@@ -541,6 +541,146 @@ def series(divisao_id):
     )
 
 
+@app.route("/mata-matas")
+def mata_matas_home():
+    conn = get_connection()
+    cursor = conn.cursor()
+
+    cursor.execute("""
+        SELECT id, nome
+        FROM competicoes
+        ORDER BY nome
+    """)
+
+    competicoes = cursor.fetchall()
+
+    cursor.close()
+    conn.close()
+
+    return render_template(
+        "mata_matas_home.html",
+        competicoes=competicoes
+    )
+
+
+@app.route("/mata-matas/<int:competicao_id>")
+def mata_matas_competicao(competicao_id):
+    conn = get_connection()
+    cursor = conn.cursor()
+
+    # Buscar competição
+    cursor.execute("""
+        SELECT id, nome
+        FROM competicoes
+        WHERE id = %s
+    """, (competicao_id,))
+    competicao = cursor.fetchone()
+
+    if not competicao:
+        cursor.close()
+        conn.close()
+        abort(404)
+
+    # 🔹 MAPA FIXO DE FASES (visual)
+    mapa_fases = [
+        {"key": "repescagem", "nome": "Repescagem", "rodada": 3, "ordem": 1},
+        {"key": "16-avos", "nome": "16-avos", "rodada": 4, "ordem": 2},
+        {"key": "oitavas", "nome": "Oitavas", "rodada": 5, "ordem": 3},
+        {"key": "quartas", "nome": "Quartas", "rodada": 6, "ordem": 4},
+        {"key": "semifinal", "nome": "Semifinal", "rodada": 7, "ordem": 5},
+        {"key": "final", "nome": "Final", "rodada": 8, "ordem": 6},
+        {"key": "finalissima", "nome": "Finalíssima", "rodada": 9, "ordem": 7},
+    ]
+
+
+    # 🔹 Buscar fases que JÁ EXISTEM no banco
+    cursor.execute("""
+        SELECT id, nome_fase, rodada
+        FROM competicao_fases
+        WHERE competicao_id = %s
+    """, (competicao_id,))
+
+    fases_db = cursor.fetchall()
+
+        # 🔹 Buscar confrontos da competição
+    cursor.execute("""
+        SELECT
+            cc.fase_id,
+            ta.nome_time AS time_a,
+            tb.nome_time AS time_b,
+            cc.pontuacao_a,
+            cc.pontuacao_b,
+            cc.vencedor_id
+        FROM competicao_confrontos cc
+        JOIN times ta ON ta.id = cc.time_a_id
+        JOIN times tb ON tb.id = cc.time_b_id
+        WHERE cc.competicao_id = %s
+        ORDER BY cc.id
+    """, (competicao_id,))
+
+    confrontos_db = cursor.fetchall()
+
+        # Agrupar confrontos por fase_id
+    confrontos_por_fase = {}
+
+    for (
+        fase_id,
+        time_a,
+        time_b,
+        pontos_a,
+        pontos_b,
+        vencedor_id
+    ) in confrontos_db:
+
+        confrontos_por_fase.setdefault(fase_id, []).append({
+            "time_a": time_a,
+            "time_b": time_b,
+            "pontos_a": pontos_a,
+            "pontos_b": pontos_b,
+            "vencedor_id": vencedor_id
+        })
+
+
+
+    # Transformar em dicionário por nome
+    fases_existentes = {
+        nome_fase.lower(): {
+            "id": fase_id,
+            "rodada": rodada
+        }
+        for fase_id, nome_fase, rodada in fases_db
+    }
+
+    # 🔹 Unir mapa fixo + banco
+
+
+    fases = []
+
+    for fase in mapa_fases:
+        chave = fase["key"]
+        existe = chave in fases_existentes
+
+        fase_id = fases_existentes[chave]["id"] if existe else None
+
+        fases.append({
+            "nome": fase["nome"],
+            "rodada": fase["rodada"],
+            "existe": existe,
+            "confrontos": confrontos_por_fase.get(fase_id, [])
+        })
+
+
+
+
+    cursor.close()
+    conn.close()
+
+    return render_template(
+        "mata_matas_competicao.html",
+        competicao=competicao,
+        fases=fases
+    )
+
 
 
 

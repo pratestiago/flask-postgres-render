@@ -1,0 +1,43 @@
+{% extends "base.html" %}
+
+{% block title %}{{ competicao[1] }}{% endblock %}
+
+{% block content %}
+<h1>🏆 {{ competicao[1] }}</h1>
+
+<div class="dashboard">
+    {% for fase in fases %}
+        <div class="card">
+            <h2>{{ fase.nome }}</h2>
+            <p><strong>Rodada:</strong> {{ fase.rodada }}</p>
+
+            {% if fase.existe %}
+                <table class="tabela">
+                    <thead>
+                        <tr>
+                            <th>Time A</th>
+                            <th>Pontos</th>
+                            <th></th>
+                            <th>Pontos</th>
+                            <th>Time B</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for c in fase.confrontos %}
+                        <tr>
+                            <td>{{ c.time_a }}</td>
+                            <td>{{ c.pontos_a if c.pontos_a is not none else "-" }}</td>
+                            <td>x</td>
+                            <td>{{ c.pontos_b if c.pontos_b is not none else "-" }}</td>
+                            <td>{{ c.time_b }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            {% else %}
+                <p><em>Fase ainda não iniciada.</em></p>
+            {% endif %}
+        </div>
+    {% endfor %}
+</div>
+{% endblock %}

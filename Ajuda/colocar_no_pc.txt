@@ -262,5 +262,45 @@ WHERE status = 'vivo';
 
 
 
+ALTER TABLE competicao_confrontos
+    ALTER COLUMN time_a_id DROP NOT NULL,
+    ALTER COLUMN time_b_id DROP NOT NULL,
+    ALTER COLUMN ranking_a DROP NOT NULL,
+    ALTER COLUMN ranking_b DROP NOT NULL;
+
+	ALTER TABLE competicao_confrontos
+ADD COLUMN origem_time_a_confronto_id INTEGER,
+ADD COLUMN origem_time_b_confronto_id INTEGER;
+
+ALTER TABLE competicao_confrontos
+ADD COLUMN ordem_na_fase INTEGER;
+
+ALTER TABLE competicao_confrontos
+ADD CONSTRAINT fk_origem_time_a_confronto
+FOREIGN KEY (origem_time_a_confronto_id)
+REFERENCES competicao_confrontos (id);
+
+ALTER TABLE competicao_confrontos
+ADD CONSTRAINT fk_origem_time_b_confronto
+FOREIGN KEY (origem_time_b_confronto_id)
+REFERENCES competicao_confrontos (id);
+
+ALTER TABLE competicao_confrontos
+ADD CONSTRAINT chk_lado_a_origem
+CHECK (
+    (time_a_id IS NOT NULL AND origem_time_a_confronto_id IS NULL)
+ OR (time_a_id IS NULL AND origem_time_a_confronto_id IS NOT NULL)
+);
+
+ALTER TABLE competicao_confrontos
+ADD CONSTRAINT chk_lado_b_origem
+CHECK (
+    (time_b_id IS NOT NULL AND origem_time_b_confronto_id IS NULL)
+ OR (time_b_id IS NULL AND origem_time_b_confronto_id IS NOT NULL)
+);
+
+ALTER TABLE competicao_confrontos
+ADD CONSTRAINT uq_confronto_fase_ordem
+UNIQUE (fase_id, ordem_na_fase);
 
 
