@@ -238,3 +238,81 @@ body {
 .card .tabela td {
     font-size: 14px;
 }
+
+/* =========================
+   MATA-MATAS / COPA
+========================= */
+
+.dashboard {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+
+/* Card da fase */
+.fase-card {
+    display: flex;
+    flex-direction: column;
+    height: 420px;
+    background: #fff;
+    border-radius: 10px;
+    padding: 16px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+    border-left: 6px solid #007bff;
+}
+
+/* Cabeçalho */
+.card-header {
+    border-bottom: 1px solid #eee;
+    padding-bottom: 8px;
+    margin-bottom: 8px;
+}
+
+.card-header h2 {
+    margin: 0;
+    font-size: 18px;
+}
+
+.card-header .rodada {
+    font-size: 13px;
+    color: #666;
+}
+
+/* Corpo com scroll */
+.card-body {
+    flex: 1;
+    overflow-y: auto;
+    padding-right: 4px;
+}
+
+/* Rodapé */
+.card-footer {
+    border-top: 1px solid #eee;
+    padding-top: 6px;
+    margin-top: 8px;
+    font-size: 13px;
+    text-align: right;
+}
+
+/* Status */
+.status.ativa {
+    color: #0a7d2c;
+    font-weight: bold;
+}
+
+.status.futura {
+    color: #999;
+}
+
+/* Fase vazia */
+.fase-vazia {
+    color: #777;
+    font-style: italic;
+    text-align: center;
+    margin-top: 40px;
+}
+
+.ordem {
+    font-weight: bold;
+}

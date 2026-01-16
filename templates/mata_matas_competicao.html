@@ -3,41 +3,64 @@
 {% block title %}{{ competicao[1] }}{% endblock %}
 
 {% block content %}
+
 <h1>🏆 {{ competicao[1] }}</h1>
 
 <div class="dashboard">
-    {% for fase in fases %}
-        <div class="card">
-            <h2>{{ fase.nome }}</h2>
-            <p><strong>Rodada:</strong> {{ fase.rodada }}</p>
 
+    {% for fase in fases %}
+    <div class="card fase-card">
+
+        <!-- CABEÇALHO -->
+        <div class="card-header">
+            <h2>{{ fase.nome }}</h2>
+            <span class="rodada">Rodada {{ fase.rodada }}</span>
+        </div>
+
+        <!-- CONTEÚDO -->
+        <div class="card-body">
             {% if fase.existe %}
                 <table class="tabela">
                     <thead>
                         <tr>
                             <th>Time A</th>
-                            <th>Pontos</th>
+                            <th>Pts</th>
                             <th></th>
-                            <th>Pontos</th>
+                            <th>Pts</th>
                             <th>Time B</th>
                         </tr>
                     </thead>
                     <tbody>
                         {% for c in fase.confrontos %}
-                        <tr>
-                            <td>{{ c.time_a }}</td>
-                            <td>{{ c.pontos_a if c.pontos_a is not none else "-" }}</td>
-                            <td>x</td>
-                            <td>{{ c.pontos_b if c.pontos_b is not none else "-" }}</td>
-                            <td>{{ c.time_b }}</td>
-                        </tr>
+                            <tr>
+                                <td class="ordem">{{ loop.index }} - {{ c.time_a }}</td>
+                                <td>{{ c.pontos_a if c.pontos_a is not none else "-" }}</td>
+                                <td>x</td>
+                                <td>{{ c.pontos_b if c.pontos_b is not none else "-" }}</td>
+                                <td>{{ c.time_b }}</td>
+                            </tr>
                         {% endfor %}
                     </tbody>
                 </table>
             {% else %}
-                <p><em>Fase ainda não iniciada.</em></p>
+                <p class="fase-vazia">
+                    ⏳ Fase ainda não iniciada
+                </p>
             {% endif %}
         </div>
+
+        <!-- RODAPÉ -->
+        <div class="card-footer">
+            {% if fase.existe %}
+                <span class="status ativa">Em andamento</span>
+            {% else %}
+                <span class="status futura">Não iniciada</span>
+            {% endif %}
+        </div>
+
+    </div>
     {% endfor %}
+
 </div>
+
 {% endblock %}
