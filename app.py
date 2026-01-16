@@ -604,18 +604,32 @@ def mata_matas_competicao(competicao_id):
 
         # 🔹 Buscar confrontos da competição
     cursor.execute("""
-        SELECT
-            cc.fase_id,
-            ta.nome_time AS time_a,
-            tb.nome_time AS time_b,
-            cc.pontuacao_a,
-            cc.pontuacao_b,
-            cc.vencedor_id
-        FROM competicao_confrontos cc
-        JOIN times ta ON ta.id = cc.time_a_id
-        JOIN times tb ON tb.id = cc.time_b_id
-        WHERE cc.competicao_id = %s
-        ORDER BY cc.id
+    SELECT
+        cc.fase_id,
+        ta.nome_time AS time_a,
+        tb.nome_time AS time_b,
+        origem.ordem_na_fase AS ordem_origem,
+                     tv.nome_time AS vencedor_origem,
+        cc.pontuacao_a,
+        cc.pontuacao_b,
+        cc.vencedor_id
+                 
+    FROM competicao_confrontos cc
+
+    JOIN times ta
+      ON ta.id = cc.time_a_id
+
+    LEFT JOIN times tb
+      ON tb.id = cc.time_b_id
+
+    LEFT JOIN competicao_confrontos origem
+      ON origem.id = cc.origem_time_b_confronto_id
+                   
+                   LEFT JOIN times tv
+  ON tv.id = origem.vencedor_id
+
+    WHERE cc.competicao_id = %s
+    ORDER BY cc.rodada, cc.ordem_na_fase
     """, (competicao_id,))
 
     confrontos_db = cursor.fetchall()
@@ -624,17 +638,21 @@ def mata_matas_competicao(competicao_id):
     confrontos_por_fase = {}
 
     for (
-        fase_id,
-        time_a,
-        time_b,
-        pontos_a,
-        pontos_b,
-        vencedor_id
+            fase_id,
+            time_a,
+            time_b,
+            ordem_origem,
+            vencedor_origem,
+            pontos_a,
+            pontos_b,
+    vencedor_id
     ) in confrontos_db:
 
         confrontos_por_fase.setdefault(fase_id, []).append({
             "time_a": time_a,
             "time_b": time_b,
+            "ordem_origem": ordem_origem,
+            "vencedor_origem": vencedor_origem,
             "pontos_a": pontos_a,
             "pontos_b": pontos_b,
             "vencedor_id": vencedor_id

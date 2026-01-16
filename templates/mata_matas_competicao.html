@@ -37,7 +37,17 @@
                                 <td>{{ c.pontos_a if c.pontos_a is not none else "-" }}</td>
                                 <td>x</td>
                                 <td>{{ c.pontos_b if c.pontos_b is not none else "-" }}</td>
-                                <td>{{ c.time_b }}</td>
+                                <td>
+    {% if c.time_b %}
+        {{ c.time_b }}
+    {% elif c.vencedor_origem %}
+        {{ c.vencedor_origem }}
+    {% else %}
+        Vencedor da Repescagem {{ c.ordem_origem }}
+    {% endif %}
+</td>
+
+
                             </tr>
                         {% endfor %}
                     </tbody>
