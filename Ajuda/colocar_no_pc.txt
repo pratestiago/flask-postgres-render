@@ -304,3 +304,45 @@ ADD CONSTRAINT uq_confronto_fase_ordem
 UNIQUE (fase_id, ordem_na_fase);
 
 
+select * from cartoleiros;
+select * from competicoes;
+select * from divisoes;
+select * from times;
+select * from times_divisoes
+
+select * from cartoleiros_detalhes;
+select * from competicao_confrontos;
+select * from competicao_fases;
+select * from competicao_ranking_snapshot;
+select * from competicao_times;
+select * from resultado_rodada;
+select * from rodadas;
+
+    SELECT
+            r.numero AS rodada,
+            c.nome AS cartoleiro,
+            t.nome_time,
+            rr.patrimonio,
+            rr.variacao_patrimonio
+        FROM rodadas r
+        JOIN resultado_rodada rr ON rr.rodada_id = r.id
+        JOIN times t ON t.id = rr.time_id
+        JOIN cartoleiros c ON c.id = t.cartoleiro_id
+        WHERE r.ano = 2025
+          AND r.numero = (
+              SELECT MAX(numero)
+              FROM rodadas
+              WHERE ano = 2025
+          )
+        ORDER BY rr.patrimonio DESC
+
+
+TRUNCATE competicao_confrontos RESTART IDENTITY  CASCADE;
+TRUNCATE competicao_fases RESTART IDENTITY CASCADE;
+TRUNCATE competicao_ranking_snapshot RESTART IDENTITY CASCADE;
+TRUNCATE competicao_times RESTART IDENTITY CASCADE;
+TRUNCATE competicao_rodadas_processadas RESTART IDENTITY  CASCADE;
+
+TRUNCATE TABLE rodadas RESTART IDENTITY CASCADE;
+
+
