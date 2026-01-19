@@ -456,9 +456,11 @@ def processar_copa_brasil(conn, ano, numero_rodada):
     print(f'[Copa Brasil] Ano {ano} - Rodada {numero_rodada}')
 
     # Copa Brasil começa na rodada 2
-    if numero_rodada < 2:
-        print('[Copa Brasil] Rodada ignorada (Copa Brasil começa na rodada 2)')
+# Copa Brasil só roda da rodada 2 até a 9
+    if numero_rodada < 2 or numero_rodada > 9:
+        print('[Copa Brasil] Rodada ignorada pela Copa Brasil')
         return
+
 
     # Verificar se existe Copa Brasil para o ano
     cursor.execute("""
@@ -1046,4 +1048,4 @@ def processar_copa_brasil(conn, ano, numero_rodada):
 
         return
 
-    print('[Copa Brasil] Rodada ignorada pela Copa Brasil')
+    

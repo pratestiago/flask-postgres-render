@@ -584,13 +584,14 @@ def mata_matas_competicao(competicao_id):
     # 🔹 MAPA FIXO DE FASES (visual)
     mapa_fases = [
         {"key": "repescagem", "nome": "Repescagem", "rodada": 3, "ordem": 1},
-        {"key": "16-avos", "nome": "16-avos", "rodada": 4, "ordem": 2},
-        {"key": "oitavas", "nome": "Oitavas", "rodada": 5, "ordem": 3},
-        {"key": "quartas", "nome": "Quartas", "rodada": 6, "ordem": 4},
-        {"key": "semifinal", "nome": "Semifinal", "rodada": 7, "ordem": 5},
-        {"key": "final", "nome": "Final", "rodada": 8, "ordem": 6},
-        {"key": "finalissima", "nome": "Finalíssima", "rodada": 9, "ordem": 7},
+        {"key": "16-avos", "nome": "2ª Fase", "rodada": 4, "ordem": 2},
+        {"key": "oitavas", "nome": "3ª Fase", "rodada": 5, "ordem": 3},
+        {"key": "quartas", "nome": "Oitavas de Final", "rodada": 6, "ordem": 4},
+        {"key": "semifinal", "nome": "Quartas de Final", "rodada": 7, "ordem": 5},
+        {"key": "final", "nome": "Semifinal", "rodada": 8, "ordem": 6},
+        {"key": "finalissima", "nome": "Final", "rodada": 9, "ordem": 7},
     ]
+
 
 
     # 🔹 Buscar fases que JÁ EXISTEM no banco
