@@ -174,7 +174,7 @@ def participantes():
             t.nome_time
         FROM cartoleiros c
         JOIN times t ON t.cartoleiro_id = c.id
-        WHERE t.temporada = 2025
+        WHERE t.temporada = 2026
         ORDER BY c.nome, t.nome_time
     """)
 

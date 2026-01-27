@@ -346,3 +346,18 @@ TRUNCATE competicao_rodadas_processadas RESTART IDENTITY  CASCADE;
 TRUNCATE TABLE rodadas RESTART IDENTITY CASCADE;
 
 
+select * from cartoleiros;
+select * from cartoleiros_detalhes;
+select * from competicao_confrontos;
+select * from competicao_fases;
+select * from competicao_ranking_snapshot;
+select * from competicao_rodadas_processadas;
+select * from competicao_times;
+select * from competicoes;
+select * from divisoes;
+select * from resultado_rodada;
+select * from rodadas;
+select * from times;
+select * from times_divisoes;
+
+
