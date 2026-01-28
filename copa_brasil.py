@@ -712,8 +712,9 @@ def processar_copa_brasil(conn, ano, numero_rodada):
         # -----------------------------
         # SEPARAR EM GRUPOS
         # -----------------------------
-        times_top = times_diretos_lista[:17]     # enfrentarão repescagem
-        times_meio = times_diretos_lista[17:]    # direto x direto
+        times_top = times_diretos_lista[:16]   # enfrentarão repescagem
+        times_meio = times_diretos_lista[16:]  # direto x direto
+
 
         # -----------------------------
         # CRIAR FASE 16-AVOS (RODADA 4)
@@ -797,9 +798,10 @@ def processar_copa_brasil(conn, ano, numero_rodada):
 
         repescagens = cursor.fetchall()
 
-        for i in range(17):
+        for i in range(16):
             time_direto = times_top[i]
-            confronto_repescagem = repescagens[16 - i]
+            confronto_repescagem = repescagens[15 - i]
+
 
             time_id, ranking_direto, _ = time_direto
             confronto_origem_id, _ = confronto_repescagem
