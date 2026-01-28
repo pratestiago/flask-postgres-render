@@ -10,21 +10,25 @@
 </p>
 
 <table class="tabela">
-    <thead>
-        <tr>
-            <th>#</th>
-            <th>Cartoleiro</th>
-            <th>Time</th>
-        </tr>
-    </thead>
-    <tbody>
-        {% for cartoleiro, time in participantes %}
-        <tr>
-            <td>{{ loop.index }}</td>
-            <td>{{ cartoleiro }}</td>
-            <td>{{ time }}</td>
-        </tr>
-        {% endfor %}
-    </tbody>
+<thead>
+    <tr>
+        <th>#</th>
+        <th>Cartoleiro</th>
+        <th>Time</th>
+        <th>Divisão</th>
+    </tr>
+</thead>
+
+<tbody>
+    {% for cartoleiro, time, divisao in participantes %}
+    <tr>
+        <td>{{ loop.index }}</td>
+        <td>{{ cartoleiro }}</td>
+        <td>{{ time }}</td>
+        <td>{{ divisao }}</td>
+    </tr>
+    {% endfor %}
+</tbody>
+
 </table>
 {% endblock %}

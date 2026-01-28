@@ -42,11 +42,11 @@ def home():
         JOIN resultado_rodada rr ON rr.rodada_id = r.id
         JOIN times t ON t.id = rr.time_id
         JOIN cartoleiros c ON c.id = t.cartoleiro_id
-        WHERE r.ano = 2025
+        WHERE r.ano = 2026
           AND r.numero = (
               SELECT MAX(numero)
               FROM rodadas
-              WHERE ano = 2025
+              WHERE ano = 2026
           )
         ORDER BY rr.pontos DESC
         LIMIT 1
@@ -64,11 +64,11 @@ def home():
         JOIN resultado_rodada rr ON rr.rodada_id = r.id
         JOIN times t ON t.id = rr.time_id
         JOIN cartoleiros c ON c.id = t.cartoleiro_id
-        WHERE r.ano = 2025
+        WHERE r.ano = 2026
           AND r.mes = (
               SELECT MAX(mes)
               FROM rodadas
-              WHERE ano = 2025
+              WHERE ano = 2026
           )
         GROUP BY r.mes, c.nome, t.nome_time
         ORDER BY SUM(rr.pontos) DESC
@@ -92,7 +92,7 @@ def home():
                 END AS turno
             FROM resultado_rodada rr
             JOIN rodadas r ON r.id = rr.rodada_id
-            WHERE r.ano = 2025
+            WHERE r.ano = 2026
         ) rr
         JOIN times t ON t.id = rr.time_id
         JOIN cartoleiros c ON c.id = t.cartoleiro_id
@@ -103,7 +103,7 @@ def home():
                     ELSE 2
                 END
             FROM rodadas
-            WHERE ano = 2025
+            WHERE ano = 2026
         )
         GROUP BY turno, c.nome, t.nome_time
         ORDER BY SUM(rr.pontos) DESC
@@ -122,11 +122,11 @@ def home():
         JOIN resultado_rodada rr ON rr.rodada_id = r.id
         JOIN times t ON t.id = rr.time_id
         JOIN cartoleiros c ON c.id = t.cartoleiro_id
-        WHERE r.ano = 2025
+        WHERE r.ano = 2026
           AND r.numero = (
               SELECT MAX(numero)
               FROM rodadas
-              WHERE ano = 2025
+              WHERE ano = 2026
           )
         ORDER BY rr.patrimonio DESC
         LIMIT 1
@@ -144,7 +144,7 @@ def home():
         JOIN rodadas r ON r.id = rr.rodada_id
         JOIN times t ON t.id = rr.time_id
         JOIN cartoleiros c ON c.id = t.cartoleiro_id
-        WHERE r.ano = 2025
+        WHERE r.ano = 2026
         GROUP BY c.nome, t.nome_time
         ORDER BY SUM(rr.pontos) DESC
         LIMIT 1
@@ -171,11 +171,14 @@ def participantes():
     cursor.execute("""
         SELECT
             c.nome AS cartoleiro,
-            t.nome_time
+            t.nome_time,
+            COALESCE(d.nome, '—') AS divisao
         FROM cartoleiros c
         JOIN times t ON t.cartoleiro_id = c.id
+        LEFT JOIN times_divisoes td ON td.time_id = t.id
+        LEFT JOIN divisoes d ON d.id = td.divisao_id
         WHERE t.temporada = 2026
-        ORDER BY c.nome, t.nome_time
+        ORDER BY d.id NULLS LAST, t.nome_time
     """)
 
     participantes = cursor.fetchall()
@@ -183,10 +186,13 @@ def participantes():
     cursor.close()
     conn.close()
 
+    
+
     return render_template(
         "participantes.html",
         participantes=participantes
     )
+
 
 
 # =========================
@@ -210,11 +216,11 @@ def resultados_rodada():
         JOIN resultado_rodada rr ON rr.rodada_id = r.id
         JOIN times t ON t.id = rr.time_id
         JOIN cartoleiros c ON c.id = t.cartoleiro_id
-        WHERE r.ano = 2025
+        WHERE r.ano = 2026
           AND r.numero = (
               SELECT MAX(numero)
               FROM rodadas
-              WHERE ano = 2025
+              WHERE ano = 2026
           )
         ORDER BY rr.pontos DESC
     """)
@@ -252,11 +258,11 @@ def resultados_mensal():
         JOIN resultado_rodada rr ON rr.rodada_id = r.id
         JOIN times t ON t.id = rr.time_id
         JOIN cartoleiros c ON c.id = t.cartoleiro_id
-        WHERE r.ano = 2025
+        WHERE r.ano = 2026
           AND r.mes = (
               SELECT MAX(mes)
               FROM rodadas
-              WHERE ano = 2025
+              WHERE ano = 2026
           )
         GROUP BY r.mes, c.nome, t.nome_time
         ORDER BY pontos_mes DESC
@@ -296,7 +302,7 @@ def resultados_turno():
         JOIN resultado_rodada rr ON rr.rodada_id = r.id
         JOIN times t ON t.id = rr.time_id
         JOIN cartoleiros c ON c.id = t.cartoleiro_id
-        WHERE r.ano = 2025
+        WHERE r.ano = 2026
         GROUP BY turno, c.nome, t.nome_time
         ORDER BY turno, pontos_turno DESC
     """)
@@ -329,11 +335,11 @@ def resultados_cartoletas():
         JOIN resultado_rodada rr ON rr.rodada_id = r.id
         JOIN times t ON t.id = rr.time_id
         JOIN cartoleiros c ON c.id = t.cartoleiro_id
-        WHERE r.ano = 2025
+        WHERE r.ano = 2026
           AND r.numero = (
               SELECT MAX(numero)
               FROM rodadas
-              WHERE ano = 2025
+              WHERE ano = 2026
           )
         ORDER BY rr.patrimonio DESC
     """)
@@ -368,7 +374,7 @@ def resultados_maior_pontuador():
         JOIN rodadas r ON r.id = rr.rodada_id
         JOIN times t ON t.id = rr.time_id
         JOIN cartoleiros c ON c.id = t.cartoleiro_id
-        WHERE r.ano = 2025
+        WHERE r.ano = 2026
         ORDER BY rr.pontos DESC
         LIMIT 10
     """)
@@ -400,7 +406,7 @@ def resultados_rodada_a_rodada():
         JOIN rodadas r ON r.id = rr.rodada_id
         JOIN times t ON t.id = rr.time_id
         JOIN cartoleiros c ON c.id = t.cartoleiro_id
-        WHERE r.ano = 2025
+        WHERE r.ano = 2026
         ORDER BY c.nome, r.numero
     """)
 
@@ -455,7 +461,7 @@ def classificacao_geral():
         JOIN resultado_rodada rr ON rr.rodada_id = r.id
         JOIN times t ON t.id = rr.time_id
         JOIN cartoleiros c ON c.id = t.cartoleiro_id
-        WHERE r.ano = 2025
+        WHERE r.ano = 2026
         GROUP BY c.nome, t.nome_time
         ORDER BY total_pontos DESC
     """)
@@ -522,8 +528,8 @@ def series(divisao_id):
         JOIN cartoleiros c ON c.id = t.cartoleiro_id
         JOIN times_divisoes td 
             ON td.time_id = t.id
-           AND td.temporada = 2025
-        WHERE r.ano = 2025
+           AND td.temporada = 2026
+        WHERE r.ano = 2026
           AND td.divisao_id = %s
         GROUP BY c.nome, t.nome_time
         ORDER BY total_pontos DESC
