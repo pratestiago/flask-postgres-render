@@ -361,3 +361,20 @@ select * from times;
 select * from times_divisoes;
 
 
+
+
+insert into cartoleiros (nome)
+values
+('MAT WM'),
+('G VASCONCELOS');
+
+insert into times (cartoleiro_id,nome_time,temporada,ativo)
+values 
+(76,'WMM United',2026,true),
+(77,'sccpguifc',2026,true);
+
+insert into times_divisoes (time_id,divisao_id,temporada,ativo)
+values
+(81,4,2026,true),
+(82,4,2026,true);
+
