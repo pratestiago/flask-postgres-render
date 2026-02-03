@@ -12,17 +12,36 @@
             <th>Cartoleiro</th>
             <th>Time</th>
             <th>Pontos Totais</th>
+            <th>Dif. p/ frente</th>
+            <th>Dif. p/ líder</th>
         </tr>
     </thead>
     <tbody>
-        {% for cartoleiro, time, pontos in resultados %}
+    {% for cartoleiro, time, pontos, diff_frente, diff_lider in resultados %}
         <tr>
             <td>{{ loop.index }}</td>
             <td>{{ cartoleiro }}</td>
             <td>{{ time }}</td>
             <td><strong>{{ "%.2f"|format(pontos) }}</strong></td>
+
+            <td>
+                {% if diff_frente is none %}
+                    —
+                {% else %}
+                    {{ "%.2f"|format(diff_frente) }}
+                {% endif %}
+            </td>
+
+            <td>
+                {% if diff_lider == 0 %}
+                    —
+                {% else %}
+                    {{ "%.2f"|format(diff_lider) }}
+                {% endif %}
+            </td>
         </tr>
-        {% endfor %}
+    {% endfor %}
     </tbody>
 </table>
+
 {% endblock %}

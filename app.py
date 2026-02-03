@@ -449,6 +449,7 @@ def resultados_rodada_a_rodada():
 
 @app.route("/classificacao")
 def classificacao_geral():
+
     conn = get_connection()
     cursor = conn.cursor()
 
@@ -456,7 +457,18 @@ def classificacao_geral():
         SELECT
             c.nome AS cartoleiro,
             t.nome_time,
-            SUM(rr.pontos) AS total_pontos
+            SUM(rr.pontos) AS total_pontos,
+
+            -- diferença para o da frente
+            SUM(rr.pontos)
+              - LAG(SUM(rr.pontos)) OVER (ORDER BY SUM(rr.pontos) DESC)
+              AS diff_frente,
+
+            -- diferença para o líder
+            SUM(rr.pontos)
+              - MAX(SUM(rr.pontos)) OVER ()
+              AS diff_lider
+
         FROM rodadas r
         JOIN resultado_rodada rr ON rr.rodada_id = r.id
         JOIN times t ON t.id = rr.time_id
@@ -475,6 +487,8 @@ def classificacao_geral():
         "classificacao.html",
         resultados=resultados
     )
+
+
 
 @app.route("/series")
 def series_home():
