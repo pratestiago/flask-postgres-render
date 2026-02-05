@@ -720,6 +720,9 @@ def mata_matas_competicao(competicao_id):
         fases=fases
     )
 
+@app.route("/resultados/duplas")
+def duplas():
+    return render_template("duplas.html")
 
 
 
