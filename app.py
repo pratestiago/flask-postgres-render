@@ -724,6 +724,46 @@ def mata_matas_competicao(competicao_id):
 def duplas():
     return render_template("duplas.html")
 
+@app.route("/resultados/duplas/rodada")
+def duplas_rodada():
+    ano = 2026        # depois você pode tornar dinâmico
+    rodada = 1        # idem
+
+    conn = get_connection()
+    cur = conn.cursor()
+
+    cur.execute("""
+        SELECT
+            d.nome AS dupla,
+            STRING_AGG(t.nome, ' + ' ORDER BY t.id) AS times,
+            SUM(tp.pontos) AS pontos
+        FROM duplas d
+        JOIN duplas_times_ligacao l
+            ON l.dupla_id = d.id
+        JOIN duplas_times t
+            ON t.id = l.time_id
+        JOIN duplas_times_pontuacoes tp
+            ON tp.time_id = t.id
+        JOIN rodadas_duplas r
+            ON r.id = tp.rodada_id
+        WHERE r.ano = %s
+          AND r.numero = %s
+        GROUP BY d.id, d.nome
+        ORDER BY pontos DESC
+    """, (ano, rodada))
+
+    resultados = cur.fetchall()
+
+    cur.close()
+    conn.close()
+
+    return render_template(
+        "duplas_rodada.html",
+        rodada=rodada,
+        resultados=resultados
+    )
+
+
 
 
 
