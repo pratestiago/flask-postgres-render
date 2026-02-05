@@ -1,0 +1,47 @@
+{% extends "base.html" %}
+
+{% block title %}Classificação Geral — Duplas{% endblock %}
+
+{% block content %}
+<h1>🏆 Classificação Geral — Duplas</h1>
+
+<table class="tabela">
+    <thead>
+        <tr>
+            <th>#</th>
+            <th>Dupla</th>
+            <th>Times</th>
+            <th>Pontos Totais</th>
+            <th>Dif. p/ frente</th>
+            <th>Dif. p/ líder</th>
+        </tr>
+    </thead>
+    <tbody>
+    {% for dupla, times, pontos, diff_frente, diff_lider in resultados %}
+        <tr>
+            <td>{{ loop.index }}</td>
+            <td>{{ dupla }}</td>
+            <td>{{ times }}</td>
+            <td><strong>{{ "%.2f"|format(pontos) }}</strong></td>
+
+            <td>
+                {% if diff_frente is none %}
+                    —
+                {% else %}
+                    {{ "%.2f"|format(diff_frente) }}
+                {% endif %}
+            </td>
+
+            <td>
+                {% if diff_lider == 0 %}
+                    —
+                {% else %}
+                    {{ "%.2f"|format(diff_lider) }}
+                {% endif %}
+            </td>
+        </tr>
+    {% endfor %}
+    </tbody>
+</table>
+
+{% endblock %}

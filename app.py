@@ -762,6 +762,57 @@ def duplas_rodada():
         rodada=rodada,
         resultados=resultados
     )
+@app.route("/resultados/duplas/classificacao-geral")
+def duplas_classificacao_geral():
+    ano = 2026  # depois pode virar dinâmico
+
+    conn = get_connection()
+    cur = conn.cursor()
+
+    cur.execute("""
+        SELECT
+            d.nome AS dupla,
+            STRING_AGG(t.nome, ' + ' ORDER BY t.id) AS times,
+            SUM(tp.pontos) AS pontos
+        FROM duplas d
+        JOIN duplas_times_ligacao l ON l.dupla_id = d.id
+        JOIN duplas_times t ON t.id = l.time_id
+        JOIN duplas_times_pontuacoes tp ON tp.time_id = t.id
+        JOIN rodadas_duplas r ON r.id = tp.rodada_id
+        WHERE r.ano = %s
+        GROUP BY d.id, d.nome
+        ORDER BY pontos DESC
+    """, (ano,))
+
+    rows = cur.fetchall()
+    cur.close()
+    conn.close()
+
+    resultados = []
+
+    lider_pontos = rows[0][2] if rows else 0
+    pontos_anterior = None
+
+    for dupla, times, pontos in rows:
+        diff_frente = None if pontos_anterior is None else pontos_anterior - pontos
+        diff_lider = lider_pontos - pontos
+
+        resultados.append((
+            dupla,
+            times,
+            pontos,
+            diff_frente,
+            diff_lider
+        ))
+
+        pontos_anterior = pontos
+
+    return render_template(
+        "duplas_classificacao_geral.html",
+        resultados=resultados
+    )
+
+
 
 
 
