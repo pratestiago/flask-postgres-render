@@ -378,3 +378,498 @@ values
 (81,4,2026,true),
 (82,4,2026,true);
 
+####################### duplas ######################
+
+CREATE TABLE IF NOT EXISTS .cartoleiros_duplas
+(
+    id SERIAL PRIMARY KEY,
+    nome VARCHAR(100) NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS duplas
+(
+    id SERIAL PRIMARY KEY,
+    ano INT NOT NULL,
+    nome VARCHAR(100),
+    criada_em TIMESTAMP DEFAULT NOW()
+);
+
+CREATE TABLE IF NOT EXISTS duplas_cartoleiros_ligacao
+(
+    id SERIAL PRIMARY KEY,
+    dupla_id INTEGER NOT NULL,
+    cartoleiro_id INTEGER NOT NULL,
+
+    CONSTRAINT fk_lig_dupla
+        FOREIGN KEY (dupla_id)
+        REFERENCES duplas (id)
+        ON DELETE CASCADE,
+
+    CONSTRAINT fk_lig_cartoleiro
+        FOREIGN KEY (cartoleiro_id)
+        REFERENCES duplas_cartoleiros (id)
+        ON DELETE CASCADE
+);
+
+
+CREATE TABLE IF NOT EXISTS rodadas_duplas
+(
+    id SERIAL PRIMARY KEY,
+    ano integer NOT NULL,
+    numero integer NOT NULL,
+    status character varying(20),
+    inicio timestamp without time zone,
+    fim timestamp without time zone,
+    created_at timestamp without time zone DEFAULT now(),
+    updated_at timestamp without time zone,
+    mes integer,
+
+    CONSTRAINT uq_rodadas_duplas_ano_numero UNIQUE (ano, numero),
+    CONSTRAINT chk_rodadas_duplas_mes_valido CHECK (mes >= 1 AND mes <= 12)
+);
+
+
+CREATE TABLE IF NOT EXISTS duplas_pontuacoes
+(
+    id SERIAL PRIMARY KEY,
+    dupla_id INTEGER NOT NULL,
+    rodada_id INTEGER NOT NULL,
+
+    pontos NUMERIC(6,2) NOT NULL,
+
+    fonte VARCHAR(20),
+    json_dados_api JSONB,
+
+    created_at TIMESTAMP WITHOUT TIME ZONE DEFAULT now(),
+    updated_at TIMESTAMP WITHOUT TIME ZONE,
+
+    CONSTRAINT uq_dupla_rodada UNIQUE (dupla_id, rodada_id),
+
+    CONSTRAINT fk_dp_dupla
+        FOREIGN KEY (dupla_id)
+        REFERENCES duplas (id)
+        ON DELETE CASCADE,
+
+    CONSTRAINT fk_dp_rodada
+        FOREIGN KEY (rodada_id)
+        REFERENCES rodadas_duplas (id)
+        ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS duplas_cartoleiros
+(
+    id SERIAL PRIMARY KEY,
+    nome VARCHAR(100) NOT NULL
+);
+
+
+
+CREATE TABLE IF NOT EXISTS duplas_times
+(
+    id SERIAL PRIMARY KEY,
+    cartoleiro_id INTEGER NOT NULL,
+    nome VARCHAR(100) NOT NULL,
+
+    CONSTRAINT fk_time_cartoleiro
+        FOREIGN KEY (cartoleiro_id)
+        REFERENCES duplas_cartoleiros (id)
+        ON DELETE CASCADE
+);
+
+
+
+DROP TABLE IF EXISTS
+    duplas_pontuacoes,
+    duplas_cartoleiros_ligacao,
+    duplas_times_ligacao,
+    duplas,
+    rodadas_duplas,
+    duplas_times,
+    duplas_cartoleiros
+CASCADE;
+
+############################# DUPLAS NOVO ##########################
+
+
+CREATE TABLE IF NOT EXISTS duplas_cartoleiros
+(
+    id SERIAL PRIMARY KEY,
+    nome VARCHAR(100) NOT NULL
+);
+
+
+CREATE TABLE IF NOT EXISTS duplas_times
+(
+    id SERIAL PRIMARY KEY,
+    cartoleiro_id INTEGER NOT NULL,
+    nome VARCHAR(100) NOT NULL,
+
+    CONSTRAINT fk_time_cartoleiro
+        FOREIGN KEY (cartoleiro_id)
+        REFERENCES duplas_cartoleiros (id)
+        ON DELETE CASCADE
+);
+
+
+CREATE TABLE IF NOT EXISTS duplas
+(
+    id SERIAL PRIMARY KEY,
+    ano INTEGER NOT NULL,
+    nome VARCHAR(100),
+    criada_em TIMESTAMP DEFAULT now()
+);
+
+
+CREATE TABLE IF NOT EXISTS duplas_times_ligacao
+(
+    id SERIAL PRIMARY KEY,
+    dupla_id INTEGER NOT NULL,
+    time_id INTEGER NOT NULL,
+
+    CONSTRAINT fk_lig_dupla
+        FOREIGN KEY (dupla_id)
+        REFERENCES duplas (id)
+        ON DELETE CASCADE,
+
+    CONSTRAINT fk_lig_time
+        FOREIGN KEY (time_id)
+        REFERENCES duplas_times (id)
+        ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS rodadas_duplas
+(
+    id SERIAL PRIMARY KEY,
+    ano INTEGER NOT NULL,
+    numero INTEGER NOT NULL,
+    status VARCHAR(20),
+    inicio TIMESTAMP WITHOUT TIME ZONE,
+    fim TIMESTAMP WITHOUT TIME ZONE,
+    mes INTEGER,
+
+    created_at TIMESTAMP WITHOUT TIME ZONE DEFAULT now(),
+    updated_at TIMESTAMP WITHOUT TIME ZONE,
+
+    CONSTRAINT uq_rodadas_duplas_ano_numero UNIQUE (ano, numero),
+    CONSTRAINT chk_rodadas_duplas_mes CHECK (mes >= 1 AND mes <= 12)
+);
+
+
+
+CREATE TABLE IF NOT EXISTS duplas_pontuacoes
+(
+    id SERIAL PRIMARY KEY,
+    dupla_id INTEGER NOT NULL,
+    rodada_id INTEGER NOT NULL,
+    pontos NUMERIC(6,2) NOT NULL,
+
+    created_at TIMESTAMP DEFAULT now(),
+
+    CONSTRAINT uq_dupla_rodada UNIQUE (dupla_id, rodada_id),
+
+    CONSTRAINT fk_pont_dupla
+        FOREIGN KEY (dupla_id)
+        REFERENCES duplas (id)
+        ON DELETE CASCADE,
+
+    CONSTRAINT fk_pont_rodada
+        FOREIGN KEY (rodada_id)
+        REFERENCES rodadas_duplas (id)
+        ON DELETE CASCADE
+);
+
+
+DROP TABLE IF EXISTS duplas_pontuacoes CASCADE;
+
+CREATE TABLE IF NOT EXISTS public.duplas_times_pontuacoes
+(
+    id SERIAL PRIMARY KEY,
+    time_id INTEGER NOT NULL,
+    rodada_id INTEGER NOT NULL,
+    pontos NUMERIC(6,2) NOT NULL,
+
+    created_at TIMESTAMP DEFAULT now(),
+
+    CONSTRAINT uq_time_rodada UNIQUE (time_id, rodada_id),
+
+    CONSTRAINT fk_tp_time
+        FOREIGN KEY (time_id)
+        REFERENCES public.duplas_times (id)
+        ON DELETE CASCADE,
+
+    CONSTRAINT fk_tp_rodada
+        FOREIGN KEY (rodada_id)
+        REFERENCES public.rodadas_duplas (id)
+        ON DELETE CASCADE
+);
+/*
+duplas_cartoleiros   → pessoa
+duplas_times         → times (entidades reais)
+duplas               → competidor (ano)
+duplas_times_ligacao → quais times formam a dupla
+rodadas_duplas       → tempo
+duplas_times_pontuacoes → DADO BRUTO (CSV)
+*/
+
+SELECT tablename
+FROM pg_tables
+WHERE schemaname = 'public'
+AND tablename LIKE '%duplas%';
+
+
+/*
+duplas_cartoleiros   → pessoa
+duplas_times         → times (entidades reais)
+duplas               → competidor (ano)
+duplas_times_ligacao → quais times formam a dupla
+rodadas_duplas       → tempo
+duplas_times_pontuacoes → DADO BRUTO (CSV)
+*/
+
+SELECT
+    d.ano,
+    d.nome AS dupla,
+    string_agg(
+        c.nome || ' (' || t.nome || ')',
+        '  +  '
+        ORDER BY t.id
+    ) AS composicao
+FROM duplas d
+JOIN duplas_times_ligacao l ON l.dupla_id = d.id
+JOIN duplas_times t ON t.id = l.time_id
+JOIN duplas_cartoleiros c ON c.id = t.cartoleiro_id
+GROUP BY d.ano, d.nome
+ORDER BY d.ano, d.nome;
+
+
+
+
+
+
+select * from duplas_times_ligacao;
+
+
+select * from duplas_times_pontuacoes;
+
+
+
+select * from rodadas_duplas;
+
+insert into duplas_times_ligacao (dupla_id,time_id)
+values
+(1,16),
+(1,20),
+(2,22),
+(2,45),
+(3,26),
+(3,39),
+(4,28),
+(4,34),
+(5,57),
+(5,58),
+(6,23),
+(6,31),
+(7,1),
+(7,32),
+(8,6),
+(8,9),
+(9,18),
+(9,46),
+(10,8),
+(10,33),
+(11,3),
+(11,29),
+(12,2),
+(12,4),
+(13,35),
+(13,51),
+(14,13),
+(14,14),
+(15,38),
+(15,50),
+(16,36),
+(16,40),
+(17,17),
+(17,47),
+(18,8),
+(18,52),
+(19,41),
+(19,55),
+(20,56),
+(20,59),
+(21,11),
+(21,12),
+(22,5),
+(22,30),
+(23,15),
+(23,19),
+(24,21),
+(24,37),
+(25,24),
+(25,25),
+(26,44),
+(26,48),
+(27,10),
+(27,51),
+(28,41),
+(28,42),
+(29,42),
+(29,55),
+(30,7),
+(30,27),
+(31,53),
+(31,54),
+(32,43),
+(32,49);
+
+insert into duplas (ano,nome) values
+
+(2026,'O Nascimento do Dibre'),
+(2026,'Mosby na Midola'),
+(2026,'Machadada no Mengo'),
+(2026,'Rattaria Máxima'),
+(2026,'Geja o Gol'),
+(2026,'Pano no Inferno'),
+(2026,'Cala e Finja'),
+(2026,'Burzandico'),
+(2026,'Tranquilidade Zicada'),
+(2026,'Globetrotters Frios e Calculistas'),
+(2026,'AdShottta '),
+(2026,'Garota de Marília'),
+(2026,'Pelicano do Egito'),
+(2026,'Porcos Parrudos'),
+(2026,'Silas Mitagens'),
+(2026,'Ocram Wanderes'),
+(2026,'Sobrou o Dinizismo'),
+(2026,'Chulé de Globetrotter'),
+(2026,'Laranja Imensa'),
+(2026,'A Bala do Allejo'),
+(2026,'Tupis de Grajaú'),
+(2026,'Almirobense'),
+(2026,'Reclame Aqui no Boteco'),
+(2026,'Restos de Sanlutty'),
+(2026,'FeliSEP'),
+(2026,'A Maleta de Dez Real'),
+(2026,'Lovers'),
+(2026,'O gordo e o tonto'),
+(2026,'O véio e o vesgo'),
+(2026,'Rato de Mala'),
+(2026,'Marco Enferrujado'),
+(2026,'Debi e Loide');
+
+)
+
+insert into duplas_times (cartoleiro_id,nome) values
+(1,'CalazansTeam'),
+(2,'Mariliense F.C'),
+(3,'Adshow17 F.C'),
+(4,'Ipanema13'),
+(5,'Almi Jr. FC'),
+(6,'Andico F.C'),
+(7,'mala03fc'),
+(8,'Brabo Globetrotters'),
+(9,'Burza F C'),
+(10,'Xuchélides'),
+(11,'Grajaux City F.C.'),
+(11,'Tupinianos FC'),
+(12,'PALM£IRAS S.E.P.'),
+(13,'ParrudoS Team'),
+(14,'Olimpingas Sport Club'),
+(15,'Didibre FC'),
+(16,'Diniz Santastico1'),
+(17,'Joga Tranquilo F.S.'),
+(18,'Miss Procon Futebol Clube'),
+(19,'nascimento124'),
+(20,'FOI O QUE SOBROU'),
+(21,'Mosby'),
+(22,'Botafogo Hell'),
+(23,'Tua mãe SEP'),
+(24,'F.C Felicio F.C'),
+(25,'Machadotti1972'),
+(26,'08 Ratto FC'),
+(26,'Real Rattaria FC'),
+(27,'Sobottka FC 633'),
+(28,'Gabirobense'),
+(29,'Hpano FC'),
+(30,'J.V.Finhani'),
+(31,'A D Peaky Blinders'),
+(32,'Massiminismo FC'),
+(33,'Al Ahly Ecc'),
+(34,'Luket Wanderes fc'),
+(35,'Sanlutty FC'),
+(36,'Mitinga`s F.C'),
+(37,'Realmengo07 Fc'),
+(38,'E.C. Ocram 5.6'),
+(39,'SC Ornaghi Paulista'),
+(40,'ZAGO PRATIS FC'),
+(41,'TIMAO R.F.G'),
+(42,'Maletinhas F.C.'),
+(43,'Na Midola FC'),
+(44,'SAY ZIKA'),
+(44,'SÓRRESTO'),
+(41,'Deizão Futebol Clube'),
+(45,'Gigantes Morumbi F.C'),
+(46,'Silasbrs FC'),
+(47,'Pelicano Papada F.C'),
+(47,'Schuletroll'),
+(48,'Ferrugem Ultimate'),
+(48,'Marco-FSA'),
+(49,'Bike Cristo'),
+(50,'Juquitas FC'),
+(51,'GEJA'),
+(51,'Wedgol'),
+(52,'Allejo Team F.C');
+
+insert into duplas_cartoleiros (nome) values 
+('A CALAZANS'),
+('A CARLOS'),
+('ADSON'),
+('ALE CHINELO'),
+('ALMI'),
+('ANDICO'),
+('B DUCATI'),
+('BRABO'),
+('BURZA'),
+('C TEIXEIRA'),
+('D FERREIRA'),
+('D LONGO'),
+('D PARRUDO'),
+('D QUIRINO'),
+('D VALADARES'),
+('DINIZ '),
+('DREXX'),
+('E GADELHA'),
+('E NASCIMENTO'),
+('EDIPO'),
+('F ROSSI'),
+('G BOTAFOGO'),
+('G CASTRO'),
+('G FELICIO'),
+('G MACHADO'),
+('G RATTO'),
+('G SOBOTTKA'),
+('GABI CADE'),
+('H PANOBIANCO'),
+('J FINHANI'),
+('KAJURU'),
+('L MASSIMINI'),
+('LUCAT'),
+('LUKET'),
+('LUTTY'),
+('M CANTALEGO'),
+('M COIMBRA'),
+('M OCRAM'),
+('ORNAGHI'),
+('PRATIS'),
+('R CUNHA'),
+('R MALETA'),
+('R SHOJI'),
+('R TRIPAO'),
+('S GARCIA'),
+('S SIQUEIRA'),
+('SCHULETA'),
+('T RIBAS'),
+('VEIO DA LARANJA'),
+('W SILVA'),
+('WED'),
+('Y ALLEJO');
