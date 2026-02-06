@@ -106,7 +106,16 @@ def importar_csv():
             ano_importado = None
             rodada_importada = None
 
+            
+
+
             for linha in leitor:
+                # normaliza chaves do CSV (BOM, espaços, maiúsculas)
+                linha = {
+                    k.strip().lower().replace('\ufeff', ''): v
+                    for k, v in linha.items()
+                }
+
                 ano = int(linha["ano"])
                 rodada = int(linha["rodada"])
                 time_id = int(linha["time_id"])
