@@ -997,6 +997,15 @@ def duplas_rodada_a_rodada():
         ranking=ranking_final
     )
 
+@app.route("/calendario")
+def calendario():
+    return render_template("calendario.html")
+
+@app.route("/resultados/duplas/calendario_duplas")
+def calendario_duplas():
+    return render_template("calendario_duplas.html")
+
+
 
 
 
