@@ -726,12 +726,31 @@ def duplas():
 
 @app.route("/resultados/duplas/rodada")
 def duplas_rodada():
-    ano = 2026        # depois você pode tornar dinâmico
-    rodada = 1        # idem
+    ano = 2026
 
     conn = get_connection()
     cur = conn.cursor()
 
+    # 🔹 pega a última rodada disponível do ano
+    cur.execute("""
+        SELECT MAX(numero)
+        FROM rodadas_duplas
+        WHERE ano = %s
+    """, (ano,))
+
+    rodada = cur.fetchone()[0]
+
+    # se ainda não existir rodada (primeiro acesso)
+    if rodada is None:
+        cur.close()
+        conn.close()
+        return render_template(
+            "duplas_rodada.html",
+            rodada=0,
+            resultados=[]
+        )
+
+    # 🔹 busca os resultados da última rodada
     cur.execute("""
         SELECT
             d.nome AS dupla,
@@ -762,6 +781,7 @@ def duplas_rodada():
         rodada=rodada,
         resultados=resultados
     )
+
 @app.route("/resultados/duplas/classificacao-geral")
 def duplas_classificacao_geral():
     ano = 2026  # depois pode virar dinâmico
@@ -814,12 +834,33 @@ def duplas_classificacao_geral():
 
 @app.route("/resultados/duplas/mensal")
 def duplas_mensal():
-    ano = 2026     # depois você pode dinamizar
-    mes = 1        # idem (janeiro, por exemplo)
+    ano = 2026
 
     conn = get_connection()
     cur = conn.cursor()
 
+    # 🔹 pega o último mês com rodadas do ano
+    cur.execute("""
+        SELECT MAX(mes)
+        FROM rodadas_duplas
+        WHERE ano = %s
+          AND mes IS NOT NULL
+    """, (ano,))
+
+    mes = cur.fetchone()[0]
+
+    # se ainda não existir mês
+    if mes is None:
+        cur.close()
+        conn.close()
+        return render_template(
+            "duplas_mensal.html",
+            ano=ano,
+            mes=0,
+            resultados=[]
+        )
+
+    # 🔹 busca os resultados do mês
     cur.execute("""
         SELECT
             d.nome AS dupla,
@@ -847,6 +888,7 @@ def duplas_mensal():
         mes=mes,
         resultados=resultados
     )
+
 
 @app.route("/resultados/duplas/turno")
 def duplas_turno():
