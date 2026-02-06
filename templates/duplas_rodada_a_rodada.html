@@ -1,0 +1,38 @@
+{% extends "base.html" %}
+
+{% block title %}Rodada a Rodada — Duplas{% endblock %}
+
+{% block content %}
+<h1>📊 Rodada a Rodada — Duplas</h1>
+
+<table class="tabela">
+    <thead>
+        <tr>
+            <th>#</th>
+            <th>Dupla</th>
+            <th>Times</th>
+            {% for r in rodadas %}
+                <th>R{{ r }}</th>
+            {% endfor %}
+            <th>Total</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for linha in ranking %}
+        <tr>
+            <td>{{ loop.index }}</td>
+            <td>{{ linha.dupla }}</td>
+            <td>{{ linha.times }}</td>
+
+            {% for r in rodadas %}
+                <td>
+                    {{ linha.rodadas.get(r, "-") }}
+                </td>
+            {% endfor %}
+
+            <td><strong>{{ "%.2f"|format(linha.total) }}</strong></td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% endblock %}

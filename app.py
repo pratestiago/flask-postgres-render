@@ -812,6 +812,192 @@ def duplas_classificacao_geral():
         resultados=resultados
     )
 
+@app.route("/resultados/duplas/mensal")
+def duplas_mensal():
+    ano = 2026     # depois você pode dinamizar
+    mes = 1        # idem (janeiro, por exemplo)
+
+    conn = get_connection()
+    cur = conn.cursor()
+
+    cur.execute("""
+        SELECT
+            d.nome AS dupla,
+            STRING_AGG(t.nome, ' + ' ORDER BY t.id) AS times,
+            SUM(tp.pontos) AS pontos
+        FROM duplas d
+        JOIN duplas_times_ligacao l ON l.dupla_id = d.id
+        JOIN duplas_times t ON t.id = l.time_id
+        JOIN duplas_times_pontuacoes tp ON tp.time_id = t.id
+        JOIN rodadas_duplas r ON r.id = tp.rodada_id
+        WHERE r.ano = %s
+          AND r.mes = %s
+        GROUP BY d.id, d.nome
+        ORDER BY pontos DESC
+    """, (ano, mes))
+
+    resultados = cur.fetchall()
+
+    cur.close()
+    conn.close()
+
+    return render_template(
+        "duplas_mensal.html",
+        ano=ano,
+        mes=mes,
+        resultados=resultados
+    )
+
+@app.route("/resultados/duplas/turno")
+def duplas_turno():
+    ano = 2026  # depois pode virar dinâmico
+
+    conn = get_connection()
+    cur = conn.cursor()
+
+    cur.execute("""
+        SELECT
+            CASE
+                WHEN r.numero BETWEEN 1 AND 19 THEN 1
+                ELSE 2
+            END AS turno,
+            d.nome AS dupla,
+            STRING_AGG(t.nome, ' + ' ORDER BY t.id) AS times,
+            SUM(tp.pontos) AS pontos
+        FROM rodadas_duplas r
+        JOIN duplas_times_pontuacoes tp ON tp.rodada_id = r.id
+        JOIN duplas_times t ON t.id = tp.time_id
+        JOIN duplas_times_ligacao l ON l.time_id = t.id
+        JOIN duplas d ON d.id = l.dupla_id
+        WHERE r.ano = %s
+        GROUP BY turno, d.id, d.nome
+        ORDER BY turno, pontos DESC
+    """, (ano,))
+
+    rows = cur.fetchall()
+    cur.close()
+    conn.close()
+
+    # separa por turno
+    turno_1 = []
+    turno_2 = []
+
+    for turno, dupla, times, pontos in rows:
+        if turno == 1:
+            turno_1.append((dupla, times, pontos))
+        else:
+            turno_2.append((dupla, times, pontos))
+
+    return render_template(
+        "duplas_turno.html",
+        ano=ano,
+        turno_1=turno_1,
+        turno_2=turno_2
+    )
+
+@app.route("/resultados/duplas/maior-pontuador")
+def duplas_maior_pontuador():
+    ano = 2026  # depois pode virar dinâmico
+
+    conn = get_connection()
+    cur = conn.cursor()
+
+    cur.execute("""
+        SELECT
+            r.numero AS rodada,
+            d.nome AS dupla,
+            STRING_AGG(t.nome, ' + ' ORDER BY t.id) AS times,
+            SUM(tp.pontos) AS pontos
+        FROM rodadas_duplas r
+        JOIN duplas_times_pontuacoes tp ON tp.rodada_id = r.id
+        JOIN duplas_times t ON t.id = tp.time_id
+        JOIN duplas_times_ligacao l ON l.time_id = t.id
+        JOIN duplas d ON d.id = l.dupla_id
+        WHERE r.ano = %s
+        GROUP BY r.numero, d.id, d.nome
+        ORDER BY pontos DESC
+        LIMIT 10
+    """, (ano,))
+
+    resultados = cur.fetchall()
+    cur.close()
+    conn.close()
+
+    return render_template(
+        "duplas_maior_pontuador.html",
+        ano=ano,
+        resultados=resultados
+    )
+@app.route("/resultados/duplas/rodada-a-rodada")
+def duplas_rodada_a_rodada():
+    ano = 2026  # depois pode dinamizar
+
+    conn = get_connection()
+    cur = conn.cursor()
+
+    # 1) pontos da dupla por rodada
+    cur.execute("""
+        SELECT
+            d.id AS dupla_id,
+            d.nome AS dupla,
+            r.numero AS rodada,
+            SUM(tp.pontos) AS pontos
+        FROM duplas d
+        JOIN duplas_times_ligacao l ON l.dupla_id = d.id
+        JOIN duplas_times_pontuacoes tp ON tp.time_id = l.time_id
+        JOIN rodadas_duplas r ON r.id = tp.rodada_id
+        WHERE r.ano = %s
+        GROUP BY d.id, d.nome, r.numero
+        ORDER BY d.nome, r.numero
+    """, (ano,))
+
+    dados = cur.fetchall()
+
+    # 2) nomes dos times por dupla
+    cur.execute("""
+        SELECT
+            d.id AS dupla_id,
+            STRING_AGG(t.nome, ' + ' ORDER BY t.id) AS times
+        FROM duplas d
+        JOIN duplas_times_ligacao l ON l.dupla_id = d.id
+        JOIN duplas_times t ON t.id = l.time_id
+        GROUP BY d.id
+    """)
+
+    times_duplas = {
+        dupla_id: times
+        for dupla_id, times in cur.fetchall()
+    }
+
+    cur.close()
+    conn.close()
+
+    # rodadas existentes
+    rodadas = sorted({linha[2] for linha in dados})
+
+    ranking = {}
+    for dupla_id, dupla, rodada, pontos in dados:
+        if dupla_id not in ranking:
+            ranking[dupla_id] = {
+                "dupla": dupla,
+                "times": times_duplas.get(dupla_id, ""),
+                "rodadas": {},
+                "total": 0
+            }
+
+        ranking[dupla_id]["rodadas"][rodada] = pontos
+        ranking[dupla_id]["total"] += pontos
+
+    ranking_final = list(ranking.values())
+    ranking_final.sort(key=lambda x: x["total"], reverse=True)
+
+    return render_template(
+        "duplas_rodada_a_rodada.html",
+        rodadas=rodadas,
+        ranking=ranking_final
+    )
+
+
 
 
 

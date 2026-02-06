@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+
+{% block title %}Resultados Mensais — Duplas{% endblock %}
+
+{% block content %}
+<h1>📅 Resultados do Mês {{ mes }} — Duplas</h1>
+
+<table class="tabela">
+    <thead>
+        <tr>
+            <th>#</th>
+            <th>Dupla</th>
+            <th>Times</th>
+            <th>Pontos no Mês</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for dupla, times, pontos in resultados %}
+        <tr>
+            <td>{{ loop.index }}</td>
+            <td>{{ dupla }}</td>
+            <td>{{ times }}</td>
+            <td><strong>{{ "%.2f"|format(pontos) }}</strong></td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+
+{% endblock %}

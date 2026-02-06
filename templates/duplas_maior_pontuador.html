@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+
+{% block title %}Maior Pontuador — Duplas{% endblock %}
+
+{% block content %}
+<h1>🔥 Maiores Pontuações — Duplas ({{ ano }})</h1>
+
+<table class="tabela">
+    <thead>
+        <tr>
+            <th>#</th>
+            <th>Rodada</th>
+            <th>Dupla</th>
+            <th>Times</th>
+            <th>Pontos</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for rodada, dupla, times, pontos in resultados %}
+        <tr>
+            <td>{{ loop.index }}</td>
+            <td>{{ rodada }}</td>
+            <td>{{ dupla }}</td>
+            <td>{{ times }}</td>
+            <td><strong>{{ "%.2f"|format(pontos) }}</strong></td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+
+{% endblock %}

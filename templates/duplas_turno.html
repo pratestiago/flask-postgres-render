@@ -1,0 +1,54 @@
+{% extends "base.html" %}
+
+{% block title %}Classificação por Turno — Duplas{% endblock %}
+
+{% block content %}
+<h1>🔄 Classificação por Turno — Duplas ({{ ano }})</h1>
+
+<h2>1º Turno (Rodadas 1 a 19)</h2>
+
+<table class="tabela">
+    <thead>
+        <tr>
+            <th>#</th>
+            <th>Dupla</th>
+            <th>Times</th>
+            <th>Pontos</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for dupla, times, pontos in turno_1 %}
+        <tr>
+            <td>{{ loop.index }}</td>
+            <td>{{ dupla }}</td>
+            <td>{{ times }}</td>
+            <td><strong>{{ "%.2f"|format(pontos) }}</strong></td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+
+<h2>2º Turno (Rodadas 20 em diante)</h2>
+
+<table class="tabela">
+    <thead>
+        <tr>
+            <th>#</th>
+            <th>Dupla</th>
+            <th>Times</th>
+            <th>Pontos</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for dupla, times, pontos in turno_2 %}
+        <tr>
+            <td>{{ loop.index }}</td>
+            <td>{{ dupla }}</td>
+            <td>{{ times }}</td>
+            <td><strong>{{ "%.2f"|format(pontos) }}</strong></td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+
+{% endblock %}
