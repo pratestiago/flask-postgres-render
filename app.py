@@ -1046,6 +1046,46 @@ def calendario():
 @app.route("/resultados/duplas/calendario_duplas")
 def calendario_duplas():
     return render_template("calendario_duplas.html")
+@app.route("/resultados/duplas/mata-mata")
+def resultados_duplas_mata_mata():
+    conn = get_connection()
+    cursor = conn.cursor()
+
+    cursor.execute("""
+        SELECT
+            d.nome AS dupla,
+            STRING_AGG(t.nome, ' + ' ORDER BY t.id) AS times,
+            SUM(tp.pontos) AS pontos
+        FROM duplas d
+        JOIN duplas_times_ligacao l ON l.dupla_id = d.id
+        JOIN duplas_times t ON t.id = l.time_id
+        JOIN duplas_times_pontuacoes tp ON tp.time_id = t.id
+        JOIN rodadas_duplas r ON r.id = tp.rodada_id
+        WHERE r.ano = 2026
+          AND r.numero = 2
+        GROUP BY d.id, d.nome
+        ORDER BY pontos DESC
+    """)
+
+    ranking = cursor.fetchall()
+    cursor.close()
+    conn.close()
+
+    total = len(ranking)
+    confrontos = []
+
+    for i in range(total // 2):
+        confrontos.append({
+            "ordem": i + 1,
+            "a": ranking[i],
+            "b": ranking[total - 1 - i]
+        })
+
+    return render_template(
+        "matamatadupla.html",
+        confrontos=confrontos
+    )
+
 
 
 

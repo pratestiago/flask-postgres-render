@@ -1,0 +1,42 @@
+{% extends "base.html" %}
+
+{% block title %}
+Mata-Mata | Duplas
+{% endblock %}
+
+{% block content %}
+
+<h1>🏆 Copa Brasil – Mata-Mata (Duplas)</h1>
+
+<p>
+    Confrontos definidos com base na classificação da rodada 2.
+</p>
+
+<table class="tabela">
+    <thead>
+        <tr>
+            <th>#</th>
+            <th>Dupla A</th>
+            <th></th>
+            <th>Dupla B</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for c in confrontos %}
+        <tr>
+            <td>{{ c.ordem }}</td>
+            <td>
+                <strong>{{ c.a[0] }}</strong><br>
+                <small>{{ c.a[1] }}</small>
+            </td>
+            <td>x</td>
+            <td>
+                <strong>{{ c.b[0] }}</strong><br>
+                <small>{{ c.b[1] }}</small>
+            </td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+
+{% endblock %}

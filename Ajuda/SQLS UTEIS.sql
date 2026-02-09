@@ -873,3 +873,21 @@ insert into duplas_cartoleiros (nome) values
 ('W SILVA'),
 ('WED'),
 ('Y ALLEJO');
+
+
+
+CREATE TABLE duplas_fases (
+    id SERIAL PRIMARY KEY,
+    ano INTEGER NOT NULL,
+
+    nome VARCHAR(50) NOT NULL,
+    ordem INTEGER NOT NULL,
+    tipo VARCHAR(20) NOT NULL CHECK (tipo IN ('ajuste', 'mata_mata')),
+
+    qtd_confrontos INTEGER NOT NULL,
+    rodada_resolucao INTEGER NOT NULL,
+
+    ativa BOOLEAN DEFAULT TRUE,
+
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
