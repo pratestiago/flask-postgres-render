@@ -891,3 +891,17 @@ CREATE TABLE duplas_fases (
 
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
+
+
+
+CREATE TABLE premios (
+    id SERIAL PRIMARY KEY,
+    competicao VARCHAR(30) NOT NULL,
+    tipo VARCHAR(30) NOT NULL,
+    ano INT NOT NULL,
+    referencia INT NOT NULL,
+    time_id INT NOT NULL,
+    valor NUMERIC(10,2) NOT NULL,
+    observacao TEXT,
+    data_registro TIMESTAMP DEFAULT NOW()
+);

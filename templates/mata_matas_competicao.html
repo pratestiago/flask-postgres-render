@@ -33,20 +33,32 @@
                     <tbody>
                         {% for c in fase.confrontos %}
                             <tr>
-                                <td class="ordem">{{ loop.index }} - {{ c.time_a }}</td>
-                                <td>{{ c.pontos_a if c.pontos_a is not none else "-" }}</td>
-                                <td>x</td>
-                                <td>{{ c.pontos_b if c.pontos_b is not none else "-" }}</td>
-                                <td>
-    {% if c.time_b %}
-        {{ c.time_b }}
-    {% elif c.vencedor_origem %}
-        {{ c.vencedor_origem }}
-    {% else %}
-        Vencedor da Repescagem {{ c.ordem_origem }}
-    {% endif %}
-</td>
+                                <td class="ordem">
+                                    {% if fase.nome == "Repescagem" %}
+                                        <strong>Rep {{ c.ordem_na_fase }}</strong> —
+                                    {% endif %}
+                                    [{{ c.ranking_a }}] {{ c.time_a }}
+                                </td>
 
+                                <td>
+                                    {{ c.pontos_a if c.pontos_a is not none else "-" }}
+                                </td>
+
+                                <td>x</td>
+
+                                <td>
+                                    {{ c.pontos_b if c.pontos_b is not none else "-" }}
+                                </td>
+
+                                <td>
+                                    {% if c.time_b %}
+                                        [{{ c.ranking_b }}] {{ c.time_b }}
+                                    {% elif c.vencedor_origem %}
+                                        {{ c.vencedor_origem }}
+                                    {% else %}
+                                        Vencedor da Repescagem {{ c.ordem_origem }}
+                                    {% endif %}
+                                </td>
 
                             </tr>
                         {% endfor %}

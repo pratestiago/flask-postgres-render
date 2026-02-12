@@ -625,15 +625,19 @@ def mata_matas_competicao(competicao_id):
 
         # 🔹 Buscar confrontos da competição
     cursor.execute("""
-    SELECT
-        cc.fase_id,
-        ta.nome_time AS time_a,
-        tb.nome_time AS time_b,
-        origem.ordem_na_fase AS ordem_origem,
-                     tv.nome_time AS vencedor_origem,
-        cc.pontuacao_a,
-        cc.pontuacao_b,
-        cc.vencedor_id
+SELECT
+    cc.fase_id,
+    cc.ordem_na_fase,
+    ta.nome_time AS time_a,
+    tb.nome_time AS time_b,
+    origem.ordem_na_fase AS ordem_origem,
+    tv.nome_time AS vencedor_origem,
+    cc.pontuacao_a,
+    cc.pontuacao_b,
+    cc.vencedor_id,
+    cc.ranking_a,
+    cc.ranking_b
+
                  
     FROM competicao_confrontos cc
 
@@ -650,7 +654,8 @@ def mata_matas_competicao(competicao_id):
   ON tv.id = origem.vencedor_id
 
     WHERE cc.competicao_id = %s
-    ORDER BY cc.rodada, cc.ordem_na_fase
+    ORDER BY cc.rodada, cc.ranking_a
+
     """, (competicao_id,))
 
     confrontos_db = cursor.fetchall()
@@ -660,14 +665,20 @@ def mata_matas_competicao(competicao_id):
 
     for (
             fase_id,
+            ordem_na_fase,
             time_a,
             time_b,
             ordem_origem,
             vencedor_origem,
             pontos_a,
             pontos_b,
-    vencedor_id
+            vencedor_id,
+            ranking_a,
+            ranking_b
     ) in confrontos_db:
+
+
+
 
         confrontos_por_fase.setdefault(fase_id, []).append({
             "time_a": time_a,
@@ -676,8 +687,13 @@ def mata_matas_competicao(competicao_id):
             "vencedor_origem": vencedor_origem,
             "pontos_a": pontos_a,
             "pontos_b": pontos_b,
-            "vencedor_id": vencedor_id
+            "vencedor_id": vencedor_id,
+            "ranking_a": ranking_a,
+            "ranking_b": ranking_b,
+            "ordem_na_fase": ordem_na_fase,
+
         })
+
 
 
 
