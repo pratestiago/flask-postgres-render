@@ -23,7 +23,9 @@ def get_connection():
     return psycopg2.connect(**DB_CONFIG)
 
 
-CSV_PATH = "resuldado_rodada.csv"
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+CSV_PATH = os.path.join(BASE_DIR, "arquivos", "resuldado_rodada.csv")
+
 
 # =========================
 # INPUT DO USUÁRIO
