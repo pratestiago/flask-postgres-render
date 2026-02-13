@@ -1,0 +1,77 @@
+{% extends "base.html" %}
+
+{% block title %}Tabela de Premiações{% endblock %}
+
+{% block content %}
+
+<h1 class="titulo-pagina">💰 Tabela de Premiações</h1>
+
+<div class="premiacao-grid">
+
+    <!-- TOP 5 ANUAL -->
+    <div class="premio-card">
+        <h2>TOP 5 ANUAL</h2>
+        <div class="linha"><span>Campeão:</span><span>R$ 1.300,00</span></div>
+        <div class="linha"><span>Vice:</span><span>R$ 800,00</span></div>
+        <div class="linha"><span>Terceiro:</span><span>R$ 400,00</span></div>
+        <div class="linha"><span>Quarto:</span><span>R$ 300,00</span></div>
+        <div class="linha"><span>Quinto:</span><span>R$ 200,00</span></div>
+    </div>
+
+    <!-- TURNOS -->
+    <div class="premio-card">
+        <h2>TURNOS</h2>
+
+        <div class="subtitulo">1º Turno</div>
+        <div class="linha"><span>Campeão:</span><span>R$ 200,00</span></div>
+        <div class="linha"><span>Vice:</span><span>R$ 100,00</span></div>
+
+        <div class="subtitulo">2º Turno</div>
+        <div class="linha"><span>Campeão:</span><span>R$ 200,00</span></div>
+        <div class="linha"><span>Vice:</span><span>R$ 100,00</span></div>
+    </div>
+
+    <!-- ESPECIAIS -->
+    <div class="premio-card">
+        <h2>ESPECIAIS</h2>
+        <div class="linha"><span>Cartoletas:</span><span>R$ 150,00</span></div>
+        <div class="linha"><span>Maior Pontuação em uma rodada:</span><span>R$ 100,00</span></div>
+    </div>
+
+    <!-- MENSAIS -->
+    <div class="premio-card">
+        <h2>MENSAIS</h2>
+        <div class="linha"><span>Janeiro/Fevereiro - Campeão:</span><span>R$ 100,00</span></div>
+        <div class="linha"><span>Janeiro/Fevereiro - Vice:</span><span>R$ 50,00</span></div>
+        <!-- restante segue padrão -->
+    </div>
+
+    <!-- PONTOS CORRIDOS -->
+    <div class="premio-card">
+        <h2>PONTOS CORRIDOS</h2>
+        <div class="linha"><span>Série A:</span><span>R$ 300,00</span></div>
+        <div class="linha"><span>Série B:</span><span>R$ 200,00</span></div>
+        <div class="linha"><span>Série C:</span><span>R$ 100,00</span></div>
+        <div class="linha"><span>Série D:</span><span>R$ 90,00</span></div>
+    </div>
+
+    <!-- MATAS MATAS -->
+    <div class="premio-card">
+        <h2>MATAS MATAS</h2>
+
+        <div class="subtitulo">Copa do Brasil</div>
+        <div class="linha"><span>Campeão:</span><span>R$ 150,00</span></div>
+        <div class="linha"><span>Vice:</span><span>R$ 80,00</span></div>
+
+        <div class="subtitulo">Copa do Mundo</div>
+        <div class="linha"><span>Campeão:</span><span>R$ 300,00</span></div>
+        <div class="linha"><span>Vice:</span><span>R$ 150,00</span></div>
+
+        <div class="subtitulo">Champions League</div>
+        <div class="linha"><span>Campeão:</span><span>R$ 600,00</span></div>
+        <div class="linha"><span>Vice:</span><span>R$ 300,00</span></div>
+    </div>
+
+</div>
+
+{% endblock %}
