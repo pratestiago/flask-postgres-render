@@ -1106,6 +1106,11 @@ def resultados_duplas_mata_mata():
 def premiacao():
     return render_template("premiacao.html")
 
+@app.route("/resultados/duplas/premiacao")
+def premiacao_duplas():
+    return render_template("premiacao_duplas.html")
+
+
 
 
 
