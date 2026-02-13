@@ -1,0 +1,80 @@
+{% extends "base.html" %}
+
+{% block title %}Vencedores{% endblock %}
+
+{% block content %}
+
+<h1>🏆 Vencedores 2026</h1>
+
+<!-- ========================= -->
+<!-- LIGA SIMPLES -->
+<!-- ========================= -->
+
+<h2>🥇 Liga Simples</h2>
+
+<table class="tabela">
+    <thead>
+        <tr>
+            <th>Tipo</th>
+            <th>Referência</th>
+            <th>Cartoleiro</th>
+            <th>Time</th>
+            <th>Valor</th>
+        </tr>
+    </thead>
+    <tbody>
+    {% for tipo, competicao, referencia, valor, obs, data, nome_time, cartoleiro in premios_simples %}
+        <tr class="{% if valor > 0 %}linha-premio{% endif %}">
+            <td>{{ tipo|capitalize }}</td>
+            <td>{{ referencia }}</td>
+            <td>{{ cartoleiro }}</td>
+            <td>{{ nome_time }}</td>
+            <td>
+                {% if valor > 0 %}
+                    💰 <strong>R$ {{ "%.2f"|format(valor) }}</strong>
+                {% else %}
+                    —
+                {% endif %}
+            </td>
+        </tr>
+    {% endfor %}
+    </tbody>
+</table>
+
+
+<!-- ========================= -->
+<!-- LIGA DUPLAS -->
+<!-- ========================= -->
+
+<h2>👥 Liga Duplas</h2>
+
+<table class="tabela">
+    <thead>
+        <tr>
+            <th>Tipo</th>
+            <th>Referência</th>
+            <th>Dupla</th>
+            <th>Times</th>
+            <th>Valor</th>
+        </tr>
+    </thead>
+    <tbody>
+    {% for tipo, competicao, referencia, valor, obs, data, dupla, times in premios_duplas %}
+        <tr class="{% if valor > 0 %}linha-premio{% endif %}">
+            <td>{{ tipo|capitalize }}</td>
+            <td>{{ referencia }}</td>
+            <td><strong>{{ dupla }}</strong></td>
+            <td>{{ times }}</td>
+            <td>
+                {% if valor > 0 %}
+                    💰 <strong>R$ {{ "%.2f"|format(valor) }}</strong>
+                {% else %}
+                    —
+                {% endif %}
+            </td>
+        </tr>
+    {% endfor %}
+    </tbody>
+</table>
+
+{% endblock %}

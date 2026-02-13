@@ -905,3 +905,7 @@ CREATE TABLE premios (
     observacao TEXT,
     data_registro TIMESTAMP DEFAULT NOW()
 );
+
+UPDATE nome_da_tabela
+SET coluna = 'novo_valor'
+WHERE condicao;

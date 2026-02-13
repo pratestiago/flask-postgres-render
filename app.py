@@ -1104,6 +1104,94 @@ def resultados_duplas_mata_mata():
 
 
 
+@app.route("/vencedores")
+def vencedores():
+
+    conn = get_connection()
+    cursor = conn.cursor()
+
+    # ==========================
+    # SIMPLES
+    # ==========================
+    cursor.execute("""
+        SELECT 
+            p.tipo,
+            p.competicao,
+            p.referencia,
+            p.valor,
+            p.observacao,
+            p.data_registro,
+            t.nome_time,
+            c.nome AS cartoleiro
+        FROM premios p
+        JOIN times t ON t.id = p.time_id
+        JOIN cartoleiros c ON c.id = t.cartoleiro_id
+        WHERE p.competicao = 'Simples'
+        AND p.ano = 2026
+        ORDER BY 
+            CASE p.tipo
+                WHEN 'rodada' THEN 1
+                WHEN 'mensal' THEN 2
+                WHEN 'turno' THEN 3
+                WHEN 'geral' THEN 4
+                ELSE 5
+            END,
+            p.referencia;
+    """)
+
+    premios_simples = cursor.fetchall()
+
+    # ==========================
+    # DUPLAS
+    # ==========================
+    cursor.execute("""
+        SELECT
+            p.tipo,
+            p.competicao,
+            p.referencia,
+            p.valor,
+            p.observacao,
+            p.data_registro,
+            d.nome AS dupla,
+            STRING_AGG(t.nome, ' + ' ORDER BY t.id) AS times
+        FROM premios p
+        JOIN duplas d ON d.id = p.time_id
+        JOIN duplas_times_ligacao l ON l.dupla_id = d.id
+        JOIN duplas_times t ON t.id = l.time_id
+        WHERE p.competicao = 'Duplas'
+        AND p.ano = 2026
+        GROUP BY 
+            p.id,
+            p.tipo,
+            p.competicao,
+            p.referencia,
+            p.valor,
+            p.observacao,
+            p.data_registro,
+            d.nome
+        ORDER BY 
+            CASE p.tipo
+                WHEN 'rodada' THEN 1
+                WHEN 'mensal' THEN 2
+                WHEN 'turno' THEN 3
+                WHEN 'geral' THEN 4
+                ELSE 5
+            END,
+            p.referencia;
+    """)
+
+    premios_duplas = cursor.fetchall()
+
+    cursor.close()
+    conn.close()
+
+    return render_template(
+        "vencedores.html",
+        premios_simples=premios_simples,
+        premios_duplas=premios_duplas
+    )
+
+
 
 
 

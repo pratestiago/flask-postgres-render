@@ -346,3 +346,20 @@ body {
 .menu-resultados .botao.destaque:hover {
     background: #15803d;
 }
+
+.premio-pago {
+    background-color: #d4edda;   /* verde claro */
+    color: #155724;              /* verde escuro */
+    font-weight: bold;
+    border-radius: 4px;
+}
+
+
+.linha-premio {
+    background-color: #e8f5e9; /* verde bem suave */
+    transition: background-color 0.3s ease;
+}
+
+.linha-premio:hover {
+    background-color: #c8e6c9; /* verde um pouco mais forte no hover */
+}
