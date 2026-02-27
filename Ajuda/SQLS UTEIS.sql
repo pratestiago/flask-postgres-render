@@ -909,3 +909,25 @@ CREATE TABLE premios (
 UPDATE nome_da_tabela
 SET coluna = 'novo_valor'
 WHERE condicao;
+
+
+insert into premios (competicao, tipo, ano, referencia, time_id,valor)
+values
+('Simples','Rodada',2026,'4º Rodada',72,100),
+('Simples','Mensal(Janeiro\Fevereiro)',2026,'Mes 1 e 2',51,100),
+('Simples','Mensal(Janeiro\Fevereiro)',2026,'Vice-Mes 1 e 2',15,50);
+;
+
+select * from premios;
+
+update premios
+set valor = 0
+where id = 9;
+
+insert into premios (competicao, tipo, ano, referencia, time_id,valor)
+values
+('Duplas','Rodada',2026,'4º Rodada',20,0),
+('Duplas','Mensal(Janeiro\Fevereiro) ',2026,'Mes 1 e 2',3,70),
+('Simples','Mensal',2026,'Mes 2',51,0),
+('Duplas','Mensal',2026,'Mes 2',20,0)
+;
