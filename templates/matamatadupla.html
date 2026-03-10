@@ -12,6 +12,10 @@ Mata-Mata | Duplas
     Confrontos definidos com base na classificação da rodada 2.
 </p>
 
+{% for fase in fases %}
+
+<h2>Fase {{ loop.index }}</h2>
+
 <table class="tabela">
     <thead>
         <tr>
@@ -19,24 +23,55 @@ Mata-Mata | Duplas
             <th>Dupla A</th>
             <th></th>
             <th>Dupla B</th>
+            <th>Vencedor</th>
         </tr>
     </thead>
-    <tbody>
-        {% for c in confrontos %}
-        <tr>
-            <td>{{ c.ordem }}</td>
-            <td>
-                <strong>{{ c.a[0] }}</strong><br>
-                <small>{{ c.a[1] }}</small>
-            </td>
-            <td>x</td>
-            <td>
-                <strong>{{ c.b[0] }}</strong><br>
-                <small>{{ c.b[1] }}</small>
-            </td>
-        </tr>
-        {% endfor %}
-    </tbody>
+
+```
+<tbody>
+
+{% for c in fase %}
+
+<tr>
+
+    <td>{{ c.ordem }}</td>
+
+    <td>
+        <strong>{{ c.a[0] }}</strong><br>
+        <small>{{ c.a[1] }}</small><br>
+        {{ "%.2f"|format(c.pa or 0) }} pts
+    </td>
+
+    <td>x</td>
+
+    <td>
+        <strong>{{ c.b[0] }}</strong><br>
+        <small>{{ c.b[1] }}</small><br>
+        {{ "%.2f"|format(c.pb or 0) }} pts
+    </td>
+
+    <td>
+        {% if c.vencedor %}
+            🏆 <strong>{{ c.vencedor[0] }}</strong>
+        {% else %}
+            —
+        {% endif %}
+    </td>
+
+</tr>
+
+{% endfor %}
+
+</tbody>
+```
+
 </table>
+
+{% endfor %}
+
+{% if campeao %}
+
+<h2>🏆 Campeão: {{ campeao[0] }}</h2>
+{% endif %}
 
 {% endblock %}
