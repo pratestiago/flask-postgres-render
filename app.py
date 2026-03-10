@@ -603,14 +603,13 @@ def mata_matas_competicao(competicao_id):
 
     # 🔹 MAPA FIXO DE FASES (visual)
     mapa_fases = [
-        {"key": "repescagem", "nome": "Repescagem", "rodada": 3, "ordem": 1},
-        {"key": "16-avos", "nome": "2ª Fase", "rodada": 4, "ordem": 2},
-        {"key": "oitavas", "nome": "3ª Fase", "rodada": 5, "ordem": 3},
-        {"key": "quartas", "nome": "Oitavas de Final", "rodada": 6, "ordem": 4},
-        {"key": "semifinal", "nome": "Quartas de Final", "rodada": 7, "ordem": 5},
-        {"key": "final", "nome": "Semifinal", "rodada": 8, "ordem": 6},
-        {"key": "finalissima", "nome": "Final", "rodada": 9, "ordem": 7},
-    ]
+    {"key": "repescagem", "nome": "Repescagem", "rodada": 3},
+    {"key": "16-avos", "nome": "16-avos de Final", "rodada": 4},
+    {"key": "oitavas", "nome": "Oitavas de Final", "rodada": 5},
+    {"key": "quartas", "nome": "Quartas de Final", "rodada": 6},
+    {"key": "semi", "nome": "Semifinal", "rodada": 7},
+    {"key": "final", "nome": "Final", "rodada": 8},
+]
 
 
 
@@ -628,33 +627,44 @@ def mata_matas_competicao(competicao_id):
 SELECT
     cc.fase_id,
     cc.ordem_na_fase,
-    ta.nome_time AS time_a,
-    tb.nome_time AS time_b,
-    origem.ordem_na_fase AS ordem_origem,
-    tv.nome_time AS vencedor_origem,
+
+    COALESCE(ta.nome_time, ta_origem.nome_time) AS time_a,
+    COALESCE(tb.nome_time, tb_origem.nome_time) AS time_b,
+
     cc.pontuacao_a,
     cc.pontuacao_b,
     cc.vencedor_id,
     cc.ranking_a,
     cc.ranking_b
 
-                 
-    FROM competicao_confrontos cc
+FROM competicao_confrontos cc
 
-    JOIN times ta
-      ON ta.id = cc.time_a_id
+-- times diretos (rodadas resolvidas)
+LEFT JOIN times ta
+  ON ta.id = cc.time_a_id
 
-    LEFT JOIN times tb
-      ON tb.id = cc.time_b_id
+LEFT JOIN times tb
+  ON tb.id = cc.time_b_id
 
-    LEFT JOIN competicao_confrontos origem
-      ON origem.id = cc.origem_time_b_confronto_id
-                   
-                   LEFT JOIN times tv
-  ON tv.id = origem.vencedor_id
+-- origem do confronto (bracket)
+LEFT JOIN competicao_confrontos origem_a
+  ON origem_a.id = cc.origem_time_a_confronto_id
 
-    WHERE cc.competicao_id = %s
-    ORDER BY cc.rodada, cc.ranking_a
+LEFT JOIN competicao_confrontos origem_b
+  ON origem_b.id = cc.origem_time_b_confronto_id
+
+-- vencedores dos confrontos anteriores
+LEFT JOIN times ta_origem
+  ON ta_origem.id = origem_a.vencedor_id
+
+LEFT JOIN times tb_origem
+  ON tb_origem.id = origem_b.vencedor_id
+
+WHERE cc.competicao_id = %s
+
+ORDER BY
+    cc.rodada,
+    COALESCE(cc.ordem_na_fase, cc.ranking_a);
 
     """, (competicao_id,))
 
@@ -664,17 +674,15 @@ SELECT
     confrontos_por_fase = {}
 
     for (
-            fase_id,
-            ordem_na_fase,
-            time_a,
-            time_b,
-            ordem_origem,
-            vencedor_origem,
-            pontos_a,
-            pontos_b,
-            vencedor_id,
-            ranking_a,
-            ranking_b
+        fase_id,
+        ordem_na_fase,
+        time_a,
+        time_b,
+        pontos_a,
+        pontos_b,
+        vencedor_id,
+        ranking_a,
+        ranking_b
     ) in confrontos_db:
 
 
@@ -683,8 +691,6 @@ SELECT
         confrontos_por_fase.setdefault(fase_id, []).append({
             "time_a": time_a,
             "time_b": time_b,
-            "ordem_origem": ordem_origem,
-            "vencedor_origem": vencedor_origem,
             "pontos_a": pontos_a,
             "pontos_b": pontos_b,
             "vencedor_id": vencedor_id,
@@ -699,9 +705,8 @@ SELECT
 
     # Transformar em dicionário por nome
     fases_existentes = {
-        nome_fase.lower(): {
-            "id": fase_id,
-            "rodada": rodada
+        rodada: {
+            "id": fase_id
         }
         for fase_id, nome_fase, rodada in fases_db
     }
@@ -712,10 +717,11 @@ SELECT
     fases = []
 
     for fase in mapa_fases:
-        chave = fase["key"]
-        existe = chave in fases_existentes
+        rodada = fase["rodada"]
 
-        fase_id = fases_existentes[chave]["id"] if existe else None
+        existe = rodada in fases_existentes
+
+        fase_id = fases_existentes[rodada]["id"] if existe else None
 
         fases.append({
             "nome": fase["nome"],

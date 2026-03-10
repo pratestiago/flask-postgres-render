@@ -1,7 +1,7 @@
 import csv
 import psycopg2
 import os
-from copa_brasil import processar_copa_brasil
+from copabrasil_v2 import processar_copa_brasil
 
 # =========================
 # CONFIGURAÇÃO DO BANCO

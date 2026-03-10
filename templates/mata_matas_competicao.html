@@ -8,80 +8,99 @@
 
 <div class="dashboard">
 
-    {% for fase in fases %}
-    <div class="card fase-card">
+{% for fase in fases %}
 
-        <!-- CABEÇALHO -->
-        <div class="card-header">
-            <h2>{{ fase.nome }}</h2>
-            <span class="rodada">Rodada {{ fase.rodada }}</span>
-        </div>
+<div class="card fase-card">
 
-        <!-- CONTEÚDO -->
-        <div class="card-body">
-            {% if fase.existe %}
-                <table class="tabela">
-                    <thead>
-                        <tr>
-                            <th>Time A</th>
-                            <th>Pts</th>
-                            <th></th>
-                            <th>Pts</th>
-                            <th>Time B</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {% for c in fase.confrontos %}
-                            <tr>
-                                <td class="ordem">
-                                    {% if fase.nome == "Repescagem" %}
-                                        <strong>Rep {{ c.ordem_na_fase }}</strong> —
-                                    {% endif %}
-                                    [{{ c.ranking_a }}] {{ c.time_a }}
-                                </td>
+```
+<!-- CABEÇALHO -->
+<div class="card-header">
+    <h2>{{ fase.nome }}</h2>
+    <span class="rodada">Rodada {{ fase.rodada }}</span>
+</div>
 
-                                <td>
-                                    {{ c.pontos_a if c.pontos_a is not none else "-" }}
-                                </td>
+<div class="card-body">
 
-                                <td>x</td>
+    {% if fase.confrontos and fase.confrontos|length > 0 %}
 
-                                <td>
-                                    {{ c.pontos_b if c.pontos_b is not none else "-" }}
-                                </td>
+    {% set tem_pontos = false %}
+    {% for c in fase.confrontos %}
+        {% if c.pontos_a is not none or c.pontos_b is not none %}
+            {% set tem_pontos = true %}
+        {% endif %}
+    {% endfor %}
 
-                                <td>
-                                    {% if c.time_b %}
-                                        [{{ c.ranking_b }}] {{ c.time_b }}
-                                    {% elif c.vencedor_origem %}
-                                        {{ c.vencedor_origem }}
-                                    {% else %}
-                                        Vencedor da Repescagem {{ c.ordem_origem }}
-                                    {% endif %}
-                                </td>
+    <div class="fase-status">
 
-                            </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
-            {% else %}
-                <p class="fase-vazia">
-                    ⏳ Fase ainda não iniciada
-                </p>
-            {% endif %}
-        </div>
-
-        <!-- RODAPÉ -->
-        <div class="card-footer">
-            {% if fase.existe %}
-                <span class="status ativa">Em andamento</span>
-            {% else %}
-                <span class="status futura">Não iniciada</span>
-            {% endif %}
-        </div>
+    {% if not tem_pontos %}
+        ⏳ Confrontos definidos — aguardando rodada
+    {% else %}
+        🔥 Confrontos em andamento
+    {% endif %}
 
     </div>
-    {% endfor %}
+
+    <table class="tabela">
+        <thead>
+            <tr>
+                <th>Time A</th>
+                <th>Pts</th>
+                <th></th>
+                <th>Pts</th>
+                <th>Time B</th>
+            </tr>
+        </thead>
+
+        <tbody>
+
+        {% for c in fase.confrontos %}
+
+        <tr>
+
+            <td>
+                {% if c.ranking_a %}
+                    <span class="ranking">[{{ c.ranking_a }}]</span>
+                {% endif %}
+                {{ c.time_a or "—" }}
+            </td>
+
+            <td>
+                {{ c.pontos_a if c.pontos_a is not none else "-" }}
+            </td>
+
+            <td>x</td>
+
+            <td>
+                {{ c.pontos_b if c.pontos_b is not none else "-" }}
+            </td>
+
+            <td>
+                {% if c.ranking_b %}
+                    <span class="ranking">[{{ c.ranking_b }}]</span>
+                {% endif %}
+                {{ c.time_b or "—" }}
+            </td>
+
+        </tr>
+
+        {% endfor %}
+
+        </tbody>
+    </table>
+
+    {% else %}
+
+    <p class="fase-vazia">
+        ⏳ Fase ainda não iniciada
+    </p>
+
+    {% endif %}
+
+</div>
+```
+
+</div>
+{% endfor %}
 
 </div>
 

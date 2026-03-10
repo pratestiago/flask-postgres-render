@@ -132,39 +132,115 @@ def criar_confrontos_fase_principal(
 # CRIAR PRÓXIMA FASE (MODELO B)
 # =========================
 
-def criar_proxima_fase(
-    cursor,
-    competicao_id,
-    rodada_atual
-):
+def criar_proxima_fase(cursor, competicao_id, rodada_atual):
     """
-    Cria os confrontos da próxima fase,
-    deixando-os como 'criado'.
+    Cria a próxima fase baseada nos confrontos da fase anterior,
+    mantendo o bracket correto.
     """
+
     fase_atual = obter_fase_principal(rodada_atual)
     fase_proxima = obter_fase_principal(rodada_atual + 1)
 
     if not fase_atual or not fase_proxima:
-        print('[Copa Brasil] Não existe próxima fase a ser criada')
+        print('[Copa Brasil] Não existe próxima fase')
         return
 
-    nome_fase, _, _, _ = fase_atual
+    nome_fase_atual, _, _, _ = fase_atual
     prox_nome, qtd_ini, qtd_fim, ordem = fase_proxima
 
-    print(
-        f'[Copa Brasil] Criando próxima fase: '
-        f'{prox_nome} (rodada {rodada_atual + 1})'
-    )
+    print(f'[Copa Brasil] Criando próxima fase: {prox_nome}')
 
-    criar_confrontos_fase_principal(
-        cursor,
+    # buscar fase atual
+    cursor.execute("""
+        SELECT id
+        FROM competicao_fases
+        WHERE competicao_id = %s
+        AND nome_fase = %s
+    """, (competicao_id, nome_fase_atual))
+
+    fase_row = cursor.fetchone()
+
+    if not fase_row:
+        print('[Copa Brasil] Fase atual não encontrada')
+        return
+
+    fase_atual_id = fase_row[0]
+
+    # buscar confrontos da fase atual
+    cursor.execute("""
+        SELECT id, ordem_na_fase
+        FROM competicao_confrontos
+        WHERE competicao_id = %s
+        AND fase_id = %s
+        ORDER BY ordem_na_fase
+    """, (competicao_id, fase_atual_id))
+
+    confrontos = cursor.fetchall()
+
+    if not confrontos:
+        print('[Copa Brasil] Nenhum confronto encontrado na fase atual')
+        return
+
+    # criar fase nova
+    cursor.execute("""
+        INSERT INTO competicao_fases (
+            competicao_id,
+            nome_fase,
+            ordem,
+            qtd_times_inicio,
+            qtd_times_fim,
+            rodada,
+            status
+        )
+        VALUES (%s, %s, %s, %s, %s, %s, 'em_andamento')
+        RETURNING id
+    """, (
         competicao_id,
         prox_nome,
-        rodada_atual + 1,
+        ordem,
         qtd_ini,
         qtd_fim,
-        ordem
-    )
+        rodada_atual + 1
+    ))
+
+    fase_nova_id = cursor.fetchone()[0]
+
+    # criar confrontos da próxima fase
+    ordem = 1
+
+    total = len(confrontos)
+
+    for i in range(total // 2):
+
+        confronto_a = confrontos[i]
+        confronto_b = confrontos[total - 1 - i]
+
+        id_a = confronto_a[0]
+        id_b = confronto_b[0]
+
+        cursor.execute("""
+            INSERT INTO competicao_confrontos (
+                competicao_id,
+                fase_id,
+                rodada,
+                ordem_na_fase,
+                origem_time_a_confronto_id,
+                origem_time_b_confronto_id,
+                status
+            )
+            VALUES (%s, %s, %s, %s, %s, %s, 'criado')
+        """, (
+            competicao_id,
+            fase_nova_id,
+            rodada_atual + 1,
+            ordem,
+            id_a,
+            id_b
+        ))
+
+        ordem += 1
+
+    print(f'[Copa Brasil] Próxima fase {prox_nome} criada com sucesso')
 
 
 # =========================
