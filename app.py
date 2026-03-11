@@ -1068,44 +1068,50 @@ def calendario():
 @app.route("/resultados/duplas/calendario_duplas")
 def calendario_duplas():
     return render_template("calendario_duplas.html")
+
 @app.route("/resultados/duplas/mata-mata")
 def resultados_duplas_mata_mata():
+
     conn = get_connection()
     cursor = conn.cursor()
 
-    cursor.execute("""
-        SELECT
-            d.nome AS dupla,
-            STRING_AGG(t.nome, ' + ' ORDER BY t.id) AS times,
-            SUM(tp.pontos) AS pontos
-        FROM duplas d
-        JOIN duplas_times_ligacao l ON l.dupla_id = d.id
-        JOIN duplas_times t ON t.id = l.time_id
-        JOIN duplas_times_pontuacoes tp ON tp.time_id = t.id
-        JOIN rodadas_duplas r ON r.id = tp.rodada_id
-        WHERE r.ano = 2026
-          AND r.numero = 2
-        GROUP BY d.id, d.nome
-        ORDER BY pontos DESC
-    """)
+    # função para buscar ranking por rodada
+    def buscar_duplas(rodada):
+        cursor.execute("""
+            SELECT
+                d.nome AS dupla,
+                STRING_AGG(t.nome, ' + ' ORDER BY t.id) AS times,
+                SUM(tp.pontos) AS pontos
+            FROM duplas d
+            JOIN duplas_times_ligacao l ON l.dupla_id = d.id
+            JOIN duplas_times t ON t.id = l.time_id
+            JOIN duplas_times_pontuacoes tp ON tp.time_id = t.id
+            JOIN rodadas_duplas r ON r.id = tp.rodada_id
+            WHERE r.ano = 2026
+              AND r.numero = %s
+            GROUP BY d.id, d.nome
+            ORDER BY pontos DESC
+        """, (rodada,))
+        return cursor.fetchall()
 
-    ranking = cursor.fetchall()
+    ranking_r2 = buscar_duplas(2)
+    ranking_r4 = buscar_duplas(4)
+    ranking_r5 = buscar_duplas(5)
+    ranking_r6 = buscar_duplas(6)
+    ranking_r7 = buscar_duplas(7)
+
+    fases, campeao = gerar_bracket_duplas(
+        ranking_r2,
+        [ranking_r4, ranking_r5, ranking_r6, ranking_r7]
+    )
+
     cursor.close()
     conn.close()
 
-    total = len(ranking)
-    confrontos = []
-
-    for i in range(total // 2):
-        confrontos.append({
-            "ordem": i + 1,
-            "a": ranking[i],
-            "b": ranking[total - 1 - i]
-        })
-
     return render_template(
         "matamatadupla.html",
-        confrontos=confrontos
+        fases=fases,
+        campeao=campeao
     )
 
 @app.route("/premiacao")
@@ -1205,7 +1211,67 @@ def vencedores():
 
 
 
+# =========================
+# BRACKET DUPLAS
+# =========================
 
+def gerar_bracket_duplas(ranking, pontos_por_rodada):
+
+    times = ranking[:]
+    fases = []
+
+    fase_atual = times
+    rodada_index = 0
+
+    while len(fase_atual) > 1:
+
+        confrontos = []
+        vencedores = []
+
+        total = len(fase_atual)
+
+        rodada_pontos = []
+        if rodada_index < len(pontos_por_rodada):
+            rodada_pontos = pontos_por_rodada[rodada_index]
+
+        mapa_pontos = {r[0]: r[2] for r in rodada_pontos}
+
+        for i in range(total // 2):
+
+            a = fase_atual[i]
+            b = fase_atual[total - 1 - i]
+
+            pa = mapa_pontos.get(a[0])
+            pb = mapa_pontos.get(b[0])
+
+            if pa is None or pb is None:
+                vencedor = None
+            else:
+                vencedor = a if pa >= pb else b
+
+            confrontos.append({
+                "ordem": i + 1,
+                "a": a,
+                "b": b,
+                "pa": pa,
+                "pb": pb,
+                "vencedor": vencedor
+            })
+
+            if vencedor:
+                vencedores.append(vencedor)
+
+        fases.append(confrontos)
+
+        if not vencedores:
+            break
+
+        fase_atual = vencedores
+        rodada_index += 1
+
+    campeao = fase_atual[0] if len(fase_atual) == 1 else None
+
+    return fases, campeao
 
 
 
