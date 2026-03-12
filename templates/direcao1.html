@@ -1,0 +1,107 @@
+{% extends "base.html" %}
+
+{% block title %}Direção{% endblock %}
+
+{% block content %}
+
+<h1>🏛️ Direção da Liga</h1>
+
+<div class="organograma">
+
+    <!-- PRESIDENTE -->
+    <div class="org-linha">
+        <div class="diretor-card">
+            <img src="/static/imagens/schulai.png">
+
+            <h3>Schulai</h3>
+            <span class="cargo">Presidente ou seria Ditador?</span>
+
+            <p class="descricao">
+            Chegou à liga em 2012 e, em 2014, assumiu a presidência. Coincidência ou golpe silencioso? Jamais saberemos !
+            Responsavel pela organizaçao, arrecadação, divulgação das duas ligas.
+            Controla com mão de ferro os grupos de Whatsapp.
+            </p>
+        </div>
+    </div>
+
+
+    <!-- DIRETOR -->
+    <div class="org-linha">
+        <div class="diretor-card">
+            <img src="/static/imagens/pratis.png">
+
+            <h3>Prates</h3>
+            <span class="cargo">Diretor ou Escravo do Schulai?</span>
+
+            <p class="descricao">
+Fundador da liga e presidente de 2008 a 2013, ajudou a criar esse caos que hoje chamamos de organização.
+
+Em 2014 sofreu um impeachment digno de CPI e foi afastado do poder.
+Desde então foi rebaixado à função de responsável pelos resultados e pelo site da liga.
+
+Ou seja: enquanto uns mandam, ele atualiza tabela.
+            </p>
+        </div>
+    </div>
+
+
+    <!-- CONSELHEIROS -->
+    <div class="org-conselheiros">
+
+        <div class="diretor-card">
+            <img src="/static/imagens/veio.png">
+
+            <h3>Veio da Laranja</h3>
+            <span class="cargo">Conselheiro Antigo</span>
+
+            <p class="descricao">
+Na liga desde 2009, é amigo antigo e muito ... intimo... do Prates.
+
+Seu hobby inclui andar de bike, chupar laranja e aumentar a população do planeta — missão que leva muito a sério, já que
+a família conta com mais de 10 herdeiros.
+
+Alguns dizem que ele é conselheiro da liga.
+Outros dizem que ele só aparece quando tem laranja ou churrasco.
+            </p>
+        </div>
+
+        <div class="diretor-card">
+            <img src="/static/imagens/sloth.png">
+
+            <h3>Eduardo Sloth</h3>
+            <span class="cargo">Conselheiro Gordo</span>
+
+            <p class="descricao">
+Na liga desde 2012, é um homem de poucas palavras… mas de muitos pratos.
+Não costuma falar muito, porém quando o assunto é comida ele sempre está presente e preparado.
+
+Dizem que ele não tem um rei na barriga — tem um império inteiro.
+
+Nas horas vagas leva uma vida tranquila: cuida dos seus gatos e escuta Madonna.
+            </p>
+        </div>
+
+        <div class="diretor-card">
+          <img src="{{ url_for('static', filename='imagens/rob.png') }}" alt="Rob">
+
+            <h3>Rob</h3>
+            <span class="cargo">Conselheiro Invejoso</span>
+
+            <p class="descricao">
+Na liga desde 2011, é conhecido como o mais arrogante entre os conselheiros — título conquistado com muito esforço e autoconfiança.
+
+Entrou na liga dizendo que ia ganhar… e, para surpresa geral, ganhou mesmo.
+O problema é que depois disso nunca mais ganhou nada, mas a confiança continua intacta.
+
+Também criou sua própria liga paralela, com aproximadamente 4.507 tipos diferentes de confrontos, regulamentos complexos e tabelas que ninguém jamais conseguiu entender completamente.
+
+Gosta de falar, de mandar, de reclamar e de espernear.
+Mas, no fundo, seu verdadeiro hobby é sentir inveja da superliga… embora, justiça seja feita, às vezes apareça com ideias muito boas.
+            </p>
+        </div>
+
+    </div>
+
+</div>
+
+{% endblock %}
