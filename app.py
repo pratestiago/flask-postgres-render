@@ -1276,7 +1276,9 @@ def gerar_bracket_duplas(ranking, pontos_por_rodada):
 
 
 
-
+@app.route("/direcao")
+def direcao():
+    return render_template("direcao.html")
 
 
 # =========================
