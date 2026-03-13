@@ -1,0 +1,60 @@
+Prioridade
+
+http://127.0.0.1:5000/vencedores - colocar duplas vencedor da 5 rodada
+
+http://127.0.0.1:5000/premiacao de simples esta incompleto
+
+
+----------------------
+
+ajustes
+
+mudar forama da importacao
+
+impedir importacao de rodada ja importada
+
+criar restauracao sem apagar banco 
+
+http://127.0.0.1:5000/resultados/rodada retirar posicao
+
+http://127.0.0.1:5000/resultados/mensal transformar numeros em meses.
+
+http://127.0.0.1:5000/classificacao criar top five entre outros denominacoes.
+
+http://127.0.0.1:5000/series - colocar subindo e rebaixamento 
+
+na serie a colocar top 5 de ouro ou outro nome.
+
+http://127.0.0.1:5000/mata-matas/1 - deixar melhor dimensionado.
+
+
+© ZagoPratis Desenvolvimento - 2025. Todos os direitos reservados. colocar 2026
+
+cartoletas duplas - colocar regra pra final do ano.
+
+criar um retornar proprio pra duplas
+
+------------------------------------
+
+criaçoes
+
+criar painel de controle
+hall da fama - começar com os campeoes.
+anos anteriores - colocar historico. (vai demorar)
+
+------------------------------------
+
+longo prazo
+
+reformar visual para mostra duplas e simples logo no inicio
+
+criar pagina para memes
+
+criar api
+
+
+
+
+
+
+

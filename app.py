@@ -604,12 +604,14 @@ def mata_matas_competicao(competicao_id):
     # 🔹 MAPA FIXO DE FASES (visual)
     mapa_fases = [
     {"key": "repescagem", "nome": "Repescagem", "rodada": 3},
-    {"key": "16-avos", "nome": "16-avos de Final", "rodada": 4},
-    {"key": "oitavas", "nome": "Oitavas de Final", "rodada": 5},
-    {"key": "quartas", "nome": "Quartas de Final", "rodada": 6},
-    {"key": "semi", "nome": "Semifinal", "rodada": 7},
-    {"key": "final", "nome": "Final", "rodada": 8},
+    {"key": "fase1", "nome": "1ª Fase", "rodada": 4},
+    {"key": "fase2", "nome": "2ª Fase", "rodada": 5},
+    {"key": "oitavas", "nome": "Oitavas de Final", "rodada": 6},
+    {"key": "quartas", "nome": "Quartas de Final", "rodada": 7},
+    {"key": "semi", "nome": "Semifinal", "rodada": 8},
+    {"key": "final", "nome": "Final", "rodada": 9},
 ]
+
 
 
 
@@ -814,7 +816,7 @@ def duplas_classificacao_geral():
     cur.execute("""
         SELECT
             d.nome AS dupla,
-            STRING_AGG(t.nome, ' + ' ORDER BY t.id) AS times,
+            STRING_AGG(DISTINCT t.nome, ' + ' ORDER BY t.nome) AS times,
             SUM(tp.pontos) AS pontos
         FROM duplas d
         JOIN duplas_times_ligacao l ON l.dupla_id = d.id
@@ -926,7 +928,7 @@ def duplas_turno():
                 ELSE 2
             END AS turno,
             d.nome AS dupla,
-            STRING_AGG(t.nome, ' + ' ORDER BY t.id) AS times,
+            STRING_AGG(DISTINCT t.nome, ' + ' ORDER BY t.nome) AS times,
             SUM(tp.pontos) AS pontos
         FROM rodadas_duplas r
         JOIN duplas_times_pontuacoes tp ON tp.rodada_id = r.id

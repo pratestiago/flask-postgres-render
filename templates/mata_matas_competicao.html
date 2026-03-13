@@ -23,23 +23,6 @@
 
     {% if fase.confrontos and fase.confrontos|length > 0 %}
 
-    {% set tem_pontos = false %}
-    {% for c in fase.confrontos %}
-        {% if c.pontos_a is not none or c.pontos_b is not none %}
-            {% set tem_pontos = true %}
-        {% endif %}
-    {% endfor %}
-
-    <div class="fase-status">
-
-    {% if not tem_pontos %}
-        ⏳ Confrontos definidos — aguardando rodada
-    {% else %}
-        🔥 Confrontos em andamento
-    {% endif %}
-
-    </div>
-
     <table class="tabela">
         <thead>
             <tr>
@@ -100,6 +83,7 @@
 ```
 
 </div>
+
 {% endfor %}
 
 </div>
