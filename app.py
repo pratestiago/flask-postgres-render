@@ -1,8 +1,17 @@
 from flask import Flask, render_template, abort
+from qual_banco_conectado import print_info_conexao, get_info_conexao
 import psycopg2
 import os
 
 app = Flask(__name__)
+
+
+# =========================
+# AMBIENTE DA APLICAÇÃO
+# =========================
+
+AMBIENTE = os.getenv("AMBIENTE", "LOCAL")
+
 
 # =========================
 # CONFIGURAÇÃO DO BANCO
@@ -22,6 +31,55 @@ def get_connection():
     if DATABASE_URL:
         return psycopg2.connect(DATABASE_URL)
     return psycopg2.connect(**DB_CONFIG)
+
+
+
+def apenas_local():
+    if AMBIENTE != "LOCAL":
+        abort(404)
+
+@app.route("/teste-ambiente")
+def teste_ambiente():
+    return f"Ambiente atual: {AMBIENTE}"
+
+
+# =========================
+# PAINEL ADMIN (LOCAL)
+# =========================
+
+@app.route("/admin")
+def admin():
+
+    apenas_local()
+
+    return render_template("admin.html", ambiente=AMBIENTE)
+
+
+@app.route("/admin/conexao")
+def admin_conexao():
+
+    apenas_local()
+
+    conn = get_connection()
+
+    banco, usuario, host = get_info_conexao(conn)
+
+    # ainda imprime no terminal (opcional, mas útil)
+    print_info_conexao(conn)
+
+    conn.close()
+
+    return f"""
+    <h1>📡 Conexão com Banco</h1>
+
+    <p><b>Banco:</b> {banco}</p>
+    <p><b>Usuário:</b> {usuario}</p>
+    <p><b>Host:</b> {host}</p>
+
+    <br><br>
+    <a href="/admin">⬅ Voltar ao painel</a>
+    """
+
 
 # =========================
 # ROTAS BÁSICAS

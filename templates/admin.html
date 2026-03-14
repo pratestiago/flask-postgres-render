@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+
+{% block title %}Painel Admin{% endblock %}
+
+{% block content %}
+
+<h1>⚙️ Painel Administrativo</h1>
+
+<p>Ambiente atual: <b>{{ ambiente }}</b></p>
+
+<div class="menu-resultados">
+
+<a class="botao">Importar rodada</a>
+
+<a class="botao">Importar duplas</a>
+
+<a class="botao">Criar backup</a>
+
+<a class="botao" href="/admin/conexao">Ver conexão banco</a>
+
+</div>
+
+{% endblock %}

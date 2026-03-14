@@ -26,26 +26,44 @@ def get_connection():
     return psycopg2.connect(**DB_CONFIG)
 
 
-def print_info_conexao(conn):
+# =========================
+# NOVA FUNÇÃO (RETORNA DADOS)
+# =========================
+
+def get_info_conexao(conn):
     """
-    Imprime informações para SABER em qual banco estamos conectados.
-    Isso é essencial antes de inserir ou apagar dados.
+    Retorna informações da conexão para uso em aplicações (ex: Flask).
     """
     cursor = conn.cursor()
+
     cursor.execute("""
         SELECT
             current_database(),
             current_user,
             inet_server_addr()
     """)
+
     banco, usuario, host = cursor.fetchone()
+
+    cursor.close()
+
+    return banco, usuario, host
+
+
+# =========================
+# FUNÇÃO ANTIGA (TERMINAL)
+# =========================
+
+def print_info_conexao(conn):
+    """
+    Imprime informações da conexão no terminal.
+    """
+    banco, usuario, host = get_info_conexao(conn)
 
     print("📡 INFORMAÇÕES DA CONEXÃO")
     print(f"Banco   : {banco}")
     print(f"Usuário : {usuario}")
     print(f"Host    : {host}")
-
-    cursor.close()
 
 
 # =========================
@@ -57,9 +75,9 @@ if __name__ == "__main__":
         conn = get_connection()
         print("✅ Conectado ao banco com sucesso!\n")
 
-        # >>> AQUI entra a função nova <<<
         print_info_conexao(conn)
 
         conn.close()
+
     except Exception as e:
         print("❌ Erro ao conectar:", e)
