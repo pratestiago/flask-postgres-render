@@ -931,3 +931,24 @@ values
 ('Simples','Mensal',2026,'Mes 2',51,0),
 ('Duplas','Mensal',2026,'Mes 2',20,0)
 ;
+
+
+acessar postgreSQL via terminal:
+
+PS C:\> cd "C:\Program Files\PostgreSQL\18\bin"
+PS C:\Program Files\PostgreSQL\18\bin> ./psql -U postgres
+Senha para o usuário postgres:
+
+psql (18.1)
+ADVERTÊNCIA: A página de código da console (850) difere da página de código do Windows (1252)
+             os caracteres de 8 bits podem não funcionar corretamente. Veja a página de
+             referência do psql "Notes for Windows users" para obter detalhes.
+Digite "help" para obter ajuda.
+
+postgres=#
+
+CREATE DATABASE postgres_teste;
+
+
+isso dentro do PS C:\> cd "C:\Program Files\PostgreSQL\18\bin" 
+.\pg_restore -h localhost -U postgres -d postgres_teste -v "C:\backups_postgres\cartola_fc\teste_1.backup"
