@@ -466,4 +466,25 @@ body {
     max-width: 320px;
 }
 
+/* =========================
+   AMBIENTE (COR DO TÍTULO)
+========================= */
 
+.titulo {
+    transition: 0.3s;
+}
+
+/* LOCAL (azul) */
+.ambiente-local {
+    color: #007bff;
+}
+
+/* TESTE (verde) */
+.ambiente-teste {
+    color: #28a745;
+}
+
+/* NEON / PROD (preto padrão) */
+.ambiente-neon {
+    color: #000;
+}

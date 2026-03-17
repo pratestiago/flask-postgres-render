@@ -1,5 +1,5 @@
 from flask import Flask, render_template, abort
-from qual_banco_conectado import print_info_conexao, get_info_conexao
+from qual_banco_conectado import print_info_conexao, get_info_conexao, get_connection
 import psycopg2
 import os
 
@@ -11,6 +11,36 @@ app = Flask(__name__)
 # =========================
 
 AMBIENTE = os.getenv("AMBIENTE", "LOCAL")
+
+def get_nome_ambiente():
+    ambiente = os.getenv("AMBIENTE", "PROD")
+
+    if ambiente == "TESTE":
+        return "🧪 TESTE"
+
+    if os.getenv("DATABASE_URL"):
+        return "🌐 NEON"
+
+    return "🚀 PRODUÇÃO LOCAL"  
+
+def get_ambiente_classe():
+    ambiente = os.getenv("AMBIENTE", "PROD")
+
+    if ambiente == "TESTE":
+        return "ambiente-teste"
+
+    if os.getenv("DATABASE_URL"):
+        return "ambiente-neon"
+
+    return "ambiente-local"
+
+@app.context_processor
+def inject_ambiente():
+    return {
+        "ambiente_nome": get_nome_ambiente(),
+        "ambiente_classe": get_ambiente_classe()
+    }
+
 
 
 # =========================
@@ -27,15 +57,11 @@ DB_CONFIG = {
 DATABASE_URL = os.getenv("DATABASE_URL")
 
 
-def get_connection():
-    if DATABASE_URL:
-        return psycopg2.connect(DATABASE_URL)
-    return psycopg2.connect(**DB_CONFIG)
 
 
 
 def apenas_local():
-    if AMBIENTE != "LOCAL":
+    if os.getenv("DATABASE_URL"):
         abort(404)
 
 @app.route("/teste-ambiente")

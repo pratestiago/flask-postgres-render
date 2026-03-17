@@ -2,6 +2,12 @@ import psycopg2
 import os
 
 # =========================
+# AMBIENTE
+# =========================
+
+AMBIENTE = os.getenv("AMBIENTE", "PROD")
+
+# =========================
 # CONFIGURAÇÃO DO BANCO
 # =========================
 
@@ -15,19 +21,40 @@ DB_CONFIG = {
 DATABASE_URL = os.getenv("DATABASE_URL")
 
 
+# =========================
+# CONEXÃO PRINCIPAL
+# =========================
+
 def get_connection():
     """
     Retorna uma conexão com o banco:
-    - se existir DATABASE_URL -> usa Neon
-    - senão -> usa banco local
+    - TESTE -> banco postgres_teste
+    - DATABASE_URL -> Neon (produção online)
+    - senão -> banco local (produção)
     """
+
+    # 🧪 TESTE (PRIORIDADE MÁXIMA)
+    if AMBIENTE == "TESTE":
+        print("🧪 Conectado ao BANCO DE TESTE")
+        return psycopg2.connect(
+            host="localhost",
+            database="postgres_teste",
+            user="postgres",
+            password="4705"
+        )
+
+    # 🌐 NEON (produção online)
     if DATABASE_URL:
+        print("🌐 Conectado ao BANCO NEON")
         return psycopg2.connect(DATABASE_URL)
+
+    # 💻 PRODUÇÃO LOCAL
+    print("🚀 Conectado ao BANCO LOCAL")
     return psycopg2.connect(**DB_CONFIG)
 
 
 # =========================
-# NOVA FUNÇÃO (RETORNA DADOS)
+# INFORMAÇÕES DA CONEXÃO
 # =========================
 
 def get_info_conexao(conn):
@@ -50,10 +77,6 @@ def get_info_conexao(conn):
     return banco, usuario, host
 
 
-# =========================
-# FUNÇÃO ANTIGA (TERMINAL)
-# =========================
-
 def print_info_conexao(conn):
     """
     Imprime informações da conexão no terminal.
@@ -67,7 +90,7 @@ def print_info_conexao(conn):
 
 
 # =========================
-# TESTE DE CONEXÃO
+# TESTE DIRETO (OPCIONAL)
 # =========================
 
 if __name__ == "__main__":

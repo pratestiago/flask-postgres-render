@@ -50,3 +50,17 @@ Remove-Item Env:DATABASE_URL
 
 4️⃣ Rodar o script
 python importar_rodada_csv.py
+
+
+
+---------------------------------
+
+venv\Scripts\activate     
+
+$env:DATABASE_URL=  ‘postgresql://neondb_owner:npg_i4nYMKJwS8hF@ep-damp-bar-adz4rcgx-pooler.c-2.us-east-1.aws.neon.tech/neondb?sslmode=require&channel_binding=require’
+$env:DATABASE_URL=  ‘postgresql://neondb_owner:npg_etc..
+$env:AMBIENTE="TESTE"   
+$env:AMBIENTE="PROD"
+
+Remove-Item Env:DATABASE_URL    
+Remove-Item Env:AMBIENTE
