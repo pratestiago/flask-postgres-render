@@ -13,7 +13,7 @@ mudar forama da importacao
 
 impedir importacao de rodada ja importada
 
-criar restauracao sem apagar banco 
+
 
 http://127.0.0.1:5000/resultados/rodada retirar posicao
 
@@ -28,7 +28,6 @@ na serie a colocar top 5 de ouro ou outro nome.
 http://127.0.0.1:5000/mata-matas/1 - deixar melhor dimensionado.
 
 
-© ZagoPratis Desenvolvimento - 2025. Todos os direitos reservados. colocar 2026
 
 cartoletas duplas - colocar regra pra final do ano.
 
@@ -38,15 +37,15 @@ criar um retornar proprio pra duplas
 
 criaçoes
 
-criar painel de controle
+criar painel de controle (em andamento)
 hall da fama - começar com os campeoes.
 anos anteriores - colocar historico. (vai demorar)
+
+reformar visual para mostra duplas e simples logo no inicio (dando inicio, temos que mudar a colocar e talvez por menu)
 
 ------------------------------------
 
 longo prazo
-
-reformar visual para mostra duplas e simples logo no inicio
 
 criar pagina para memes
 

@@ -965,3 +965,55 @@ set tipo = 'Rodada'
 where id = 15;
 
 select * from rodadas duplas
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+COPA DO MUNDO
+
+CREATE TABLE copamundo_grupos (
+    id SERIAL PRIMARY KEY,
+    ano INTEGER NOT NULL,
+    grupo VARCHAR(1) NOT NULL,
+    time_id INTEGER NOT NULL,
+    tipo VARCHAR(20) NOT NULL, -- 'direto' ou 'repescagem'
+
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE copamundo_repescagem (
+    id SERIAL PRIMARY KEY,
+    ano INTEGER NOT NULL,
+    grupo VARCHAR(1) NOT NULL,
+    time_a_id INTEGER NOT NULL,
+    time_b_id INTEGER NOT NULL,
+
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+
+
+ALTER TABLE copamundo_grupos
+ADD CONSTRAINT fk_copamundo_grupos_time
+FOREIGN KEY (time_id)
+REFERENCES times(id);
+
+
+ALTER TABLE copamundo_repescagem
+ADD CONSTRAINT fk_repescagem_time_a
+FOREIGN KEY (time_a_id)
+REFERENCES times(id);
+
+ALTER TABLE copamundo_repescagem
+ADD CONSTRAINT fk_repescagem_time_b
+FOREIGN KEY (time_b_id)
+REFERENCES times(id);
+
+
+
+SELECT * FROM copamundo_grupos;
+
+SELECT * FROM copamundo_repescagem;
+
+delete from copamundo_grupos;
+
+delete from copamundo_repescagem
