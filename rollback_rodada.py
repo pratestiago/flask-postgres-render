@@ -1,24 +1,4 @@
-import psycopg2
-import os
-
-# =========================
-# CONFIGURAÇÃO DO BANCO
-# =========================
-
-DB_CONFIG = {
-    "host": "localhost",
-    "database": "postgres",
-    "user": "postgres",
-    "password": "4705"
-}
-
-DATABASE_URL = os.getenv("DATABASE_URL")
-
-
-def get_connection():
-    if DATABASE_URL:
-        return psycopg2.connect(DATABASE_URL)
-    return psycopg2.connect(**DB_CONFIG)
+from qual_banco_conectado import get_connection
 
 
 # =========================

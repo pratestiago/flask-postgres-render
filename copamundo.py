@@ -5,10 +5,6 @@
 # =========================
 
 def calcular_base_grupos(total_times):
-    """
-    Retorna o maior valor válido para fase de grupos:
-    (4, 8, 16, 32, 64, 128...)
-    """
     base = 4
 
     while base * 2 <= total_times:
@@ -21,20 +17,43 @@ def distribuir_diretos_em_grupos(ranking, diretos):
 
     grupos = {}
 
-    # criar grupos A até P (16 grupos)
     letras = [chr(i) for i in range(65, 65 + 16)]
 
     for letra in letras:
         grupos[letra] = []
 
-    # distribuir
     for i in range(diretos):
         grupo = letras[i % 16]
         time = ranking[i]
-
         grupos[grupo].append(time)
 
     return grupos
+
+
+def gerar_repescagem_com_grupos(ranking, diretos):
+
+    repescagem = ranking[diretos:]
+
+    confrontos = []
+
+    letras = [chr(i) for i in range(65, 65 + 16)]
+
+    total = len(repescagem)
+
+    for i in range(total // 2):
+
+        time_a = repescagem[i]
+        time_b = repescagem[total - 1 - i]
+
+        grupo = letras[i % 16]
+
+        confrontos.append({
+            "grupo": grupo,
+            "time_a": time_a,
+            "time_b": time_b
+        })
+
+    return confrontos
 
 
 # =========================
@@ -47,12 +66,13 @@ def processar_copa_mundo(conn, ano, rodada):
 
     print(f"[Copa Mundo] Ano {ano} - Rodada {rodada}")
 
-    # Copa Mundo começa na rodada 10
     if rodada < 10:
         print("[Copa Mundo] Rodada ignorada")
         return
 
     if rodada == 10:
+        
+        limpar_copa_mundo(cursor, ano)
 
         resultado = rodada_10_classificacao(cursor, ano)
 
@@ -62,7 +82,7 @@ def processar_copa_mundo(conn, ano, rodada):
         ranking, diretos = resultado
 
         # =========================
-        # DISTRIBUIR DIRETOS NOS GRUPOS
+        # GRUPOS (DIRETOS)
         # =========================
 
         grupos = distribuir_diretos_em_grupos(ranking, diretos)
@@ -73,6 +93,23 @@ def processar_copa_mundo(conn, ano, rodada):
             print(f"\nGrupo {grupo}:")
             for t in times:
                 print(f"- {t[1]}")
+
+        # 💾 SALVAR
+        salvar_grupos(cursor, ano, grupos)
+
+        # =========================
+        # REPESCAGEM
+        # =========================
+
+        confrontos = gerar_repescagem_com_grupos(ranking, diretos)
+
+        print("\n--- REPESCAGEM (CONFRONTOS) ---")
+
+        for c in confrontos:
+            print(f"{c['time_a'][1]} x {c['time_b'][1]} → Grupo {c['grupo']}")
+            
+        # 💾 SALVAR
+        salvar_repescagem(cursor, ano, confrontos)    
 
     elif rodada == 11:
         print("[Copa Mundo] Rodada 11 - (ainda vamos implementar)")
@@ -103,7 +140,7 @@ def rodada_10_classificacao(cursor, ano):
         JOIN rodadas r ON r.id = rr.rodada_id
         JOIN times t ON t.id = rr.time_id
         WHERE r.ano = %s
-        AND r.numero = 6  -- <- TESTE (depois volta pra 10)
+        AND r.numero = 10  -- TESTE (depois mudar pra 10)
         ORDER BY rr.pontos DESC
     """, (ano,))
 
@@ -117,17 +154,9 @@ def rodada_10_classificacao(cursor, ano):
 
     print(f"Total de times: {total_times}")
 
-    # =========================
-    # CALCULAR BASE
-    # =========================
-
     base = calcular_base_grupos(total_times)
 
     print(f"Base da fase de grupos: {base}")
-
-    # =========================
-    # DEFINIR DIRETOS E REPESCAGEM
-    # =========================
 
     excedente = total_times - base
 
@@ -136,10 +165,6 @@ def rodada_10_classificacao(cursor, ano):
 
     print(f"Times diretos: {diretos}")
     print(f"Times na repescagem: {repescagem_times}")
-
-    # =========================
-    # DEBUG
-    # =========================
 
     print("\n--- DIRETOS ---")
     for i, time in enumerate(ranking[:diretos], start=1):
@@ -150,6 +175,45 @@ def rodada_10_classificacao(cursor, ano):
         print(f"{i}º - {time[1]}")
 
     return ranking, diretos
+
+def salvar_grupos(cursor, ano, grupos):
+
+    for grupo, times in grupos.items():
+        for t in times:
+
+            time_id = t[0]  # id do time
+
+            cursor.execute("""
+                INSERT INTO copamundo_grupos (ano, grupo, time_id, tipo)
+                VALUES (%s, %s, %s, %s)
+            """, (ano, grupo, time_id, "direto"))
+
+def salvar_repescagem(cursor, ano, confrontos):
+
+    for c in confrontos:
+
+        cursor.execute("""
+            INSERT INTO copamundo_repescagem (ano, grupo, time_a_id, time_b_id)
+            VALUES (%s, %s, %s, %s)
+        """, (
+            ano,
+            c["grupo"],
+            c["time_a"][0],
+            c["time_b"][0]
+        ))
+        
+        
+def limpar_copa_mundo(cursor, ano):
+
+    cursor.execute("""
+        DELETE FROM copamundo_grupos
+        WHERE ano = %s
+    """, (ano,))
+
+    cursor.execute("""
+        DELETE FROM copamundo_repescagem
+        WHERE ano = %s
+    """, (ano,))        
 
 
 # =========================

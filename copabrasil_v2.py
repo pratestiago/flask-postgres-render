@@ -452,7 +452,52 @@ def resolver_final(cursor, ano):
 
     print("[Copa Brasil V2] Resolvendo finalíssima")
 
-    # definir campeão
+    cursor.execute("""
+        SELECT id, time_a_id, time_b_id
+        FROM competicao_confrontos
+        WHERE rodada = 9
+        AND status = 'criado'
+    """)
+
+    confronto = cursor.fetchone()
+
+    if not confronto:
+        print("[Copa Brasil V2] Final já resolvida ou não encontrada")
+        return
+
+    confronto_id, time_a, time_b = confronto
+
+    cursor.execute("""
+        SELECT rr.time_id, rr.pontos
+        FROM resultado_rodada rr
+        JOIN rodadas r ON r.id = rr.rodada_id
+        WHERE r.ano = %s
+        AND r.numero = 9
+        AND rr.time_id IN (%s, %s)
+    """, (ano, time_a, time_b))
+
+    resultados = cursor.fetchall()
+
+    pontos = {t: p for t, p in resultados}
+
+    pa = pontos.get(time_a, 0)
+    pb = pontos.get(time_b, 0)
+
+    if pa >= pb:
+        vencedor = time_a
+    else:
+        vencedor = time_b
+
+    cursor.execute("""
+        UPDATE competicao_confrontos
+        SET pontuacao_a = %s,
+            pontuacao_b = %s,
+            vencedor_id = %s,
+            status = 'finalizado'
+        WHERE id = %s
+    """, (pa, pb, vencedor, confronto_id))
+
+    print("[Copa Brasil V2] Final resolvida com sucesso")
 
 
 # =========================
