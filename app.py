@@ -972,7 +972,7 @@ def duplas_mensal():
     cur.execute("""
         SELECT
             d.nome AS dupla,
-            STRING_AGG(t.nome, ' + ' ORDER BY t.id) AS times,
+            STRING_AGG(DISTINCT t.nome, ' + ' ORDER BY t.nome) AS times,
             SUM(tp.pontos) AS pontos
         FROM duplas d
         JOIN duplas_times_ligacao l ON l.dupla_id = d.id

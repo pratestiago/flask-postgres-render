@@ -952,3 +952,16 @@ CREATE DATABASE postgres_teste;
 
 isso dentro do PS C:\> cd "C:\Program Files\PostgreSQL\18\bin" 
 .\pg_restore -h localhost -U postgres -d postgres_teste -v "C:\backups_postgres\cartola_fc\teste_1.backup"
+
+
+select * from premios order by 1;
+
+insert into premios (competicao, tipo, ano, referencia, time_id, valor)
+values
+('Simples','Rodada',2026,'5ºRodada',66,0);
+
+update premios
+set tipo = 'Rodada'
+where id = 15;
+
+select * from rodadas duplas
