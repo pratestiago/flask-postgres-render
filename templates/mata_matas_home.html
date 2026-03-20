@@ -6,15 +6,11 @@
 <h1>🏆 Mata-Matas</h1>
 
 <ul class="menu menu-horizontal">
-    {% for id, nome in competicoes %}
+    {% for id, nome, tipo in competicoes %}
         <li>
-            {% if id == 1 %}
-                <a href="/mata-matas/{{ id }}">{{ nome }}</a>
-            {% else %}
-                <a href="/em-desenvolvimento">{{ nome }}</a>
-            {% endif %}
+            <a href="/mata-matas/{{ id }}">{{ nome }}</a>
         </li>
     {% endfor %}
 </ul>
-{% endblock %}
 
+{% endblock %}

@@ -1,0 +1,144 @@
+{% extends "base.html" %}
+
+{% block title %}🌍 {{ competicao[1] }}{% endblock %}
+
+{% block content %}
+
+<h1>🌍 {{ competicao[1] }}</h1>
+
+<div class="dashboard">
+
+<!-- ========================= -->
+<!-- ⏳ ANTES DA COPA -->
+<!-- ========================= -->
+{% if rodada < 10 %}
+
+<div class="card">
+    <h2>⏳ Em breve...</h2>
+    <p>A fase da Copa do Mundo começa na rodada 10.</p>
+</div>
+
+{% endif %}
+
+
+<!-- ========================= -->
+<!-- 🏆 FASE DE GRUPOS -->
+<!-- ========================= -->
+{% if rodada >= 10 %}
+
+<div class="card">
+    <h2>🏆 Fase de Grupos</h2>
+
+    {% set grupos_dict = {} %}
+
+    {% for grupo, time, tipo in grupos %}
+        {% if grupo not in grupos_dict %}
+            {% set _ = grupos_dict.update({grupo: []}) %}
+        {% endif %}
+        {% set _ = grupos_dict[grupo].append((time, tipo)) %}
+    {% endfor %}
+
+    <div class="menu-resultados">
+
+        {% for grupo, times in grupos_dict.items() %}
+        <div class="card">
+
+            <h3>Grupo {{ grupo }}</h3>
+
+            <table class="tabela">
+                <thead>
+                    <tr>
+                        <th>Time</th>
+                        <th>Status</th>
+                    </tr>
+                </thead>
+                <tbody>
+
+                {% for time, tipo in times %}
+                <tr>
+                    <td>{{ time }}</td>
+                    <td>
+                        {% if tipo == 'direto' %}
+                            ✅ Direto
+                        {% elif tipo == 'repescagem' %}
+                            🔁 Repescagem
+                        {% else %}
+                            —
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+
+                </tbody>
+            </table>
+
+        </div>
+        {% endfor %}
+
+    </div>
+
+</div>
+
+{% endif %}
+
+
+<!-- ========================= -->
+<!-- 🔁 REPESCAGEM -->
+<!-- ========================= -->
+{% if rodada == 10 %}
+
+<div class="card">
+    <h2>🔁 Repescagem</h2>
+
+    {% if repescagem and repescagem|length > 0 %}
+
+    <table class="tabela">
+        <thead>
+            <tr>
+                <th>Grupo</th>
+                <th>Time A</th>
+                <th></th>
+                <th>Time B</th>
+            </tr>
+        </thead>
+
+        <tbody>
+
+        {% for grupo, a, b in repescagem %}
+        <tr>
+            <td>{{ grupo }}</td>
+            <td>{{ a }}</td>
+            <td>x</td>
+            <td>{{ b }}</td>
+        </tr>
+        {% endfor %}
+
+        </tbody>
+    </table>
+
+    {% else %}
+
+    <p>Sem confrontos de repescagem.</p>
+
+    {% endif %}
+
+</div>
+
+{% endif %}
+
+
+<!-- ========================= -->
+<!-- ✅ PÓS REPESCAGEM -->
+<!-- ========================= -->
+{% if rodada >= 11 %}
+
+<div class="card">
+    <h2>✅ Grupos Completos</h2>
+    <p>Todos os times já foram definidos após a repescagem.</p>
+</div>
+
+{% endif %}
+
+</div>
+
+{% endblock %}

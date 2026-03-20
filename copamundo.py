@@ -45,7 +45,8 @@ def gerar_repescagem_com_grupos(ranking, diretos):
         time_a = repescagem[i]
         time_b = repescagem[total - 1 - i]
 
-        grupo = letras[i % 16]
+        inicio = letras.index("N")  # começa no grupo N
+        grupo = letras[(inicio + i) % 16]
 
         confrontos.append({
             "grupo": grupo,
@@ -112,7 +113,9 @@ def processar_copa_mundo(conn, ano, rodada):
         salvar_repescagem(cursor, ano, confrontos)    
 
     elif rodada == 11:
-        print("[Copa Mundo] Rodada 11 - (ainda vamos implementar)")
+        rodada_11_repescagem(cursor, ano)
+        
+        
 
     elif rodada in [12, 13, 14]:
         print("[Copa Mundo] Fase de grupos (ainda vamos implementar)")
@@ -215,6 +218,74 @@ def limpar_copa_mundo(cursor, ano):
         WHERE ano = %s
     """, (ano,))        
 
+def rodada_11_repescagem(cursor, ano):
+
+    print("[Copa Mundo] Rodada 11 - Repescagem")
+
+    # =========================
+    # BUSCAR CONFRONTOS
+    # =========================
+
+    cursor.execute("""
+        SELECT grupo, time_a_id, time_b_id
+        FROM copamundo_repescagem
+        WHERE ano = %s
+    """, (ano,))
+
+    confrontos = cursor.fetchall()
+
+    # =========================
+    # BUSCAR PONTOS RODADA 11
+    # =========================
+
+    cursor.execute("""
+        SELECT rr.time_id, rr.pontos
+        FROM resultado_rodada rr
+        JOIN rodadas r ON r.id = rr.rodada_id
+        WHERE r.ano = %s
+        AND r.numero = 11
+    """, (ano,))
+
+    resultados = cursor.fetchall()
+
+    # transformar em dicionário
+    pontos = {r[0]: r[1] for r in resultados}
+
+    # =========================
+    # DEFINIR VENCEDORES
+    # =========================
+
+    vencedores = []
+
+    for grupo, time_a, time_b in confrontos:
+
+        pontos_a = pontos.get(time_a, 0)
+        pontos_b = pontos.get(time_b, 0)
+
+        if pontos_a > pontos_b:
+            vencedor = time_a
+
+        elif pontos_b > pontos_a:
+            vencedor = time_b
+
+        else:
+            # desempate → melhor ranking (menor id no ranking inicial)
+            vencedor = min(time_a, time_b)
+
+        vencedores.append((grupo, vencedor))
+
+        print(f"Grupo {grupo}: {time_a} x {time_b} → vencedor: {vencedor}")
+
+    # =========================
+    # SALVAR NOS GRUPOS
+    # =========================
+
+    for grupo, vencedor in vencedores:
+
+        cursor.execute("""
+            INSERT INTO copamundo_grupos (ano, grupo, time_id, tipo)
+            VALUES (%s, %s, %s, %s)
+        """, (ano, grupo, vencedor, "repescagem"))
 
 # =========================
 # EXECUÇÃO DIRETA
@@ -227,7 +298,7 @@ if __name__ == "__main__":
     conn = get_connection()
 
     ano = 2026
-    rodada = 10
+    rodada = 11
 
     processar_copa_mundo(conn, ano, rodada)
 

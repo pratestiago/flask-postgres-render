@@ -968,7 +968,7 @@ select * from rodadas duplas
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%
 
-COPA DO MUNDO
+--COPA DO MUNDO
 
 CREATE TABLE copamundo_grupos (
     id SERIAL PRIMARY KEY,
