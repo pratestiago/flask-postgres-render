@@ -1194,10 +1194,11 @@ def resultados_duplas_mata_mata():
     ranking_r5 = buscar_duplas(5)
     ranking_r6 = buscar_duplas(6)
     ranking_r7 = buscar_duplas(7)
+    ranking_r8 = buscar_duplas(8)
 
     fases, campeao = gerar_bracket_duplas(
         ranking_r2,
-        [ranking_r4, ranking_r5, ranking_r6, ranking_r7]
+        [ranking_r4, ranking_r5, ranking_r6, ranking_r7, ranking_r8]
     )
 
     cursor.close()
