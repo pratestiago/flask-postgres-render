@@ -1,5 +1,6 @@
 from flask import Flask, render_template, abort
 from qual_banco_conectado import print_info_conexao, get_info_conexao, get_connection
+from copamundo import get_classificacao_grupos
 import psycopg2
 import os
 
@@ -667,104 +668,35 @@ def mata_matas_home():
         competicoes=competicoes
     )
 
+@app.route("/copabrazil")
+def copabrazil():
 
-@app.route("/mata-matas/<int:competicao_id>")
-def mata_matas_competicao(competicao_id):
     conn = get_connection()
     cursor = conn.cursor()
 
-    # =========================
-    # BUSCAR COMPETIÇÃO
-    # =========================
-    cursor.execute("""
-        SELECT id, nome, tipo, ano
-        FROM competicoes
-        WHERE id = %s
-    """, (competicao_id,))
-    
-    competicao = cursor.fetchone()
-
-    if not competicao:
-        cursor.close()
-        conn.close()
-        abort(404)
-
-    id_comp, nome, tipo, ano = competicao
+    competicao_id = 1
 
     # =========================
-    # 🔥 COPA MUNDO (NOVO)
+    # BUSCAR FASES
     # =========================
-    if tipo == "copa_mundo":
-
-        # rodada atual
-        cursor.execute("""
-            SELECT MAX(numero)
-            FROM rodadas
-            WHERE ano = %s
-        """, (ano,))
-        
-        rodada = cursor.fetchone()[0]
-
-        # grupos
-        cursor.execute("""
-            SELECT grupo, t.nome_time, cg.tipo
-            FROM copamundo_grupos cg
-            JOIN times t ON t.id = cg.time_id
-            WHERE cg.ano = %s
-            ORDER BY grupo
-        """, (ano,))
-        grupos = cursor.fetchall()
-
-        # repescagem
-        cursor.execute("""
-            SELECT cr.grupo, ta.nome_time, tb.nome_time
-            FROM copamundo_repescagem cr
-            JOIN times ta ON ta.id = cr.time_a_id
-            JOIN times tb ON tb.id = cr.time_b_id
-            WHERE cr.ano = %s
-        """, (ano,))
-        repescagem = cursor.fetchall()
-
-        cursor.close()
-        conn.close()
-
-        return render_template(
-            "copamundo.html",
-            competicao=competicao,
-            rodada=rodada,
-            grupos=grupos,
-            repescagem=repescagem
-        )
-
-    # =========================
-    # 🏆 MATA-MATA (EXISTENTE)
-    # =========================
-
-    mapa_fases = [
-        {"key": "repescagem", "nome": "Repescagem", "rodada": 3},
-        {"key": "fase1", "nome": "1ª Fase", "rodada": 4},
-        {"key": "fase2", "nome": "2ª Fase", "rodada": 5},
-        {"key": "oitavas", "nome": "Oitavas de Final", "rodada": 6},
-        {"key": "quartas", "nome": "Quartas de Final", "rodada": 7},
-        {"key": "semi", "nome": "Semifinal", "rodada": 8},
-        {"key": "final", "nome": "Final", "rodada": 9},
-    ]
-
-    # fases existentes
     cursor.execute("""
         SELECT id, nome_fase, rodada
         FROM competicao_fases
         WHERE competicao_id = %s
+        ORDER BY rodada
     """, (competicao_id,))
+
     fases_db = cursor.fetchall()
 
-    # confrontos
+    # =========================
+    # BUSCAR CONFRONTOS
+    # =========================
     cursor.execute("""
         SELECT
             cc.fase_id,
             cc.ordem_na_fase,
-            COALESCE(ta.nome_time, ta_origem.nome_time),
-            COALESCE(tb.nome_time, tb_origem.nome_time),
+            ta.nome_time,
+            tb.nome_time,
             cc.pontuacao_a,
             cc.pontuacao_b,
             cc.vencedor_id,
@@ -773,21 +705,20 @@ def mata_matas_competicao(competicao_id):
         FROM competicao_confrontos cc
         LEFT JOIN times ta ON ta.id = cc.time_a_id
         LEFT JOIN times tb ON tb.id = cc.time_b_id
-        LEFT JOIN competicao_confrontos origem_a ON origem_a.id = cc.origem_time_a_confronto_id
-        LEFT JOIN competicao_confrontos origem_b ON origem_b.id = cc.origem_time_b_confronto_id
-        LEFT JOIN times ta_origem ON ta_origem.id = origem_a.vencedor_id
-        LEFT JOIN times tb_origem ON tb_origem.id = origem_b.vencedor_id
         WHERE cc.competicao_id = %s
-        ORDER BY cc.rodada, COALESCE(cc.ordem_na_fase, cc.ranking_a)
+        ORDER BY cc.rodada, cc.ordem_na_fase
     """, (competicao_id,))
 
     confrontos_db = cursor.fetchall()
 
+    # =========================
+    # ORGANIZAR CONFRONTOS POR FASE
+    # =========================
     confrontos_por_fase = {}
 
     for (
         fase_id,
-        ordem_na_fase,
+        ordem,
         time_a,
         time_b,
         pontos_a,
@@ -805,25 +736,19 @@ def mata_matas_competicao(competicao_id):
             "vencedor_id": vencedor_id,
             "ranking_a": ranking_a,
             "ranking_b": ranking_b,
-            "ordem_na_fase": ordem_na_fase,
+            "ordem_na_fase": ordem
         })
 
-    fases_existentes = {
-        rodada: {"id": fase_id}
-        for fase_id, nome_fase, rodada in fases_db
-    }
-
+    # =========================
+    # MONTAR FASES FINAL
+    # =========================
     fases = []
 
-    for fase in mapa_fases:
-        rodada_fase = fase["rodada"]
-        existe = rodada_fase in fases_existentes
-        fase_id = fases_existentes[rodada_fase]["id"] if existe else None
+    for fase_id, nome_fase, rodada in fases_db:
 
         fases.append({
-            "nome": fase["nome"],
-            "rodada": rodada_fase,
-            "existe": existe,
+            "nome": nome_fase,
+            "rodada": rodada,
             "confrontos": confrontos_por_fase.get(fase_id, [])
         })
 
@@ -831,9 +756,147 @@ def mata_matas_competicao(competicao_id):
     conn.close()
 
     return render_template(
-        "mata_matas_competicao.html",
-        competicao=competicao,
+        "copabrasil.html",
+        competicao=("id", "Copa Brasil"),
         fases=fases
+    )
+
+
+@app.route("/copamundo")
+def copamundo():
+
+    conn = get_connection()
+    cursor = conn.cursor()
+
+    ano = 2026
+
+    # =========================
+    # RODADA ATUAL
+    # =========================
+    cursor.execute("""
+        SELECT MAX(numero)
+        FROM rodadas
+        WHERE ano = %s
+    """, (ano,))
+    
+    rodada = cursor.fetchone()[0]
+
+    # =========================
+    # GRUPOS (BASE)
+    # =========================
+    cursor.execute("""
+        SELECT grupo, t.nome_time
+        FROM copamundo_grupos cg
+        JOIN times t ON t.id = cg.time_id
+        WHERE cg.ano = %s
+        ORDER BY grupo
+    """, (ano,))
+
+    dados = cursor.fetchall()
+
+    grupos = {}
+
+    for grupo, nome in dados:
+        grupos.setdefault(grupo, []).append({
+            "time": nome,
+            "pontos": 0,
+            "classificado": False
+        })
+
+    # =========================
+    # CLASSIFICAÇÃO REAL (SE JÁ TEM JOGOS)
+    # =========================
+    cursor.execute("""
+        SELECT COUNT(*)
+        FROM copamundo_jogos
+        WHERE ano = %s
+    """, (ano,))
+
+    tem_jogos = cursor.fetchone()[0] > 0
+
+    if tem_jogos:
+        grupos = get_classificacao_grupos(cursor, ano)
+
+    # =========================
+    # REPESCAGEM (COM PONTOS)
+    # =========================
+    rodada_consulta = rodada if rodada >= 11 else None
+
+    cursor.execute("""
+        SELECT 
+            cr.grupo,
+            ta.nome_time,
+            tb.nome_time,
+            ra.pontos,
+            rb.pontos
+        FROM copamundo_repescagem cr
+        JOIN times ta ON ta.id = cr.time_a_id
+        JOIN times tb ON tb.id = cr.time_b_id
+
+        LEFT JOIN resultado_rodada ra 
+            ON ra.time_id = cr.time_a_id
+            AND (%s IS NOT NULL AND ra.rodada_id = (
+                SELECT id FROM rodadas 
+                WHERE numero = %s AND ano = %s
+            ))
+
+        LEFT JOIN resultado_rodada rb 
+            ON rb.time_id = cr.time_b_id
+            AND (%s IS NOT NULL AND rb.rodada_id = (
+                SELECT id FROM rodadas 
+                WHERE numero = %s AND ano = %s
+            ))
+
+        WHERE cr.ano = %s
+    """, (
+        rodada_consulta, rodada, ano,
+        rodada_consulta, rodada, ano,
+        ano
+    ))
+
+    repescagem = cursor.fetchall()
+
+    # =========================
+    # JOGOS DOS GRUPOS
+    # =========================
+    cursor.execute("""
+        SELECT 
+            cj.grupo,
+            cj.rodada,
+            ta.nome_time,
+            tb.nome_time,
+            cj.pontos_a,
+            cj.pontos_b
+        FROM copamundo_jogos cj
+        JOIN times ta ON ta.id = cj.time_a_id
+        JOIN times tb ON tb.id = cj.time_b_id
+        WHERE cj.ano = %s
+        ORDER BY cj.grupo, cj.rodada
+    """, (ano,))
+
+    jogos_raw = cursor.fetchall()
+
+    jogos_grupos = {}
+
+    for grupo, rodada_jogo, ta, tb, pa, pb in jogos_raw:
+
+        jogos_grupos.setdefault(grupo, []).append({
+            "rodada": rodada_jogo,
+            "time_a": ta,
+            "time_b": tb,
+            "pontos_a": pa,
+            "pontos_b": pb
+        })
+
+    cursor.close()
+    conn.close()
+
+    return render_template(
+        "copamundo.html",
+        rodada=rodada,
+        grupos=grupos,
+        repescagem=repescagem,
+        jogos_grupos=jogos_grupos
     )
     
 @app.route("/resultados/duplas")
@@ -896,8 +959,7 @@ def duplas_rodada():
         "duplas_rodada.html",
         rodada=rodada,
         resultados=resultados
-    )    
-    
+    )        
 
 @app.route("/resultados/duplas/classificacao-geral")
 def duplas_classificacao_geral():
@@ -1305,53 +1367,6 @@ def vencedores():
         premios_duplas=premios_duplas
     )
 
-@app.route("/copamundo")
-def copamundo():
-
-    conn = get_connection()
-    cursor = conn.cursor()
-
-    ano = 2026
-
-    # pegar rodada atual
-    cursor.execute("""
-        SELECT MAX(numero)
-        FROM rodadas
-        WHERE ano = %s
-    """, (ano,))
-    
-    rodada = cursor.fetchone()[0]
-
-    # buscar grupos
-    cursor.execute("""
-        SELECT grupo, t.nome_time, cg.tipo
-        FROM copamundo_grupos cg
-        JOIN times t ON t.id = cg.time_id
-        WHERE cg.ano = %s
-        ORDER BY grupo
-    """, (ano,))
-
-    grupos = cursor.fetchall()
-
-    # buscar repescagem
-    cursor.execute("""
-        SELECT cr.grupo, ta.nome_time, tb.nome_time
-        FROM copamundo_repescagem cr
-        JOIN times ta ON ta.id = cr.time_a_id
-        JOIN times tb ON tb.id = cr.time_b_id
-        WHERE cr.ano = %s
-    """, (ano,))
-
-    repescagem = cursor.fetchall()
-
-    conn.close()
-
-    return render_template(
-        "copamundo.html",
-        rodada=rodada,
-        grupos=grupos,
-        repescagem=repescagem
-    )
 
 
 # =========================

@@ -1017,3 +1017,74 @@ SELECT * FROM copamundo_repescagem;
 delete from copamundo_grupos;
 
 delete from copamundo_repescagem
+
+
+CREATE TABLE copamundo_jogos (
+    id SERIAL PRIMARY KEY,
+    ano INT,
+    grupo CHAR(1),
+    rodada INT,
+    time_a_id INT,
+    time_b_id INT,
+    pontos_a INT,
+    pontos_b INT
+);
+
+CREATE TABLE copamundo_jogos (
+    id SERIAL PRIMARY KEY,
+    ano INT NOT NULL,
+    grupo CHAR(1) NOT NULL,
+    rodada INT NOT NULL,
+    time_a_id INT NOT NULL,
+    time_b_id INT NOT NULL,
+    pontos_a NUMERIC(10,2),
+    pontos_b NUMERIC(10,2)
+);
+
+
+
+
+DELETE FROM copamundo_grupos;
+DELETE FROM copamundo_repescagem;
+DELETE FROM copamundo_jogos;
+
+
+SELECT * FROM copamundo_grupos;
+SELECT * FROM copamundo_repescagem;
+select * from copamundo_jogos;
+
+SELECT ano, COUNT(*) FROM copamundo_grupos GROUP BY ano;
+
+select * from rodadas;
+
+select * from resultado_rodada;
+
+SELECT setval(
+    'rodadas_id_seq',
+    (SELECT MAX(id) FROM rodadas)
+);
+
+SELECT setval(
+    'resultado_rodada_id_seq',
+    (SELECT MAX(id) FROM resultado_rodada)
+);
+
+
+    SELECT grupo, t.nome_time, cg.tipo
+    FROM copamundo_grupos cg
+    LEFT JOIN times t ON t.id = cg.time_id
+    WHERE cg.ano = 2026
+
+
+dados = cursor.fetchall()
+
+
+
+SELECT grupo, COUNT(*) 
+FROM copamundo_grupos
+GROUP BY grupo;
+
+
+SELECT pontos
+FROM resultado_rodada
+LIMIT 10;

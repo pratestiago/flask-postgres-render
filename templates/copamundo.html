@@ -1,96 +1,123 @@
 {% extends "base.html" %}
 
-{% block title %}🌍 {{ competicao[1] }}{% endblock %}
+{% block title %}🌍 Copa do Mundo{% endblock %}
 
 {% block content %}
 
-<h1>🌍 {{ competicao[1] }}</h1>
+<h1>🌍 Copa do Mundo</h1>
 
 <div class="dashboard">
 
 <!-- ========================= -->
 <!-- ⏳ ANTES DA COPA -->
 <!-- ========================= -->
-{% if rodada < 10 %}
 
+{% if rodada < 10 %}
 <div class="card">
     <h2>⏳ Em breve...</h2>
     <p>A fase da Copa do Mundo começa na rodada 10.</p>
 </div>
-
 {% endif %}
-
 
 <!-- ========================= -->
 <!-- 🏆 FASE DE GRUPOS -->
 <!-- ========================= -->
+
 {% if rodada >= 10 %}
 
 <div class="card">
     <h2>🏆 Fase de Grupos</h2>
 
-    {% set grupos_dict = {} %}
-
-    {% for grupo, time, tipo in grupos %}
-        {% if grupo not in grupos_dict %}
-            {% set _ = grupos_dict.update({grupo: []}) %}
-        {% endif %}
-        {% set _ = grupos_dict[grupo].append((time, tipo)) %}
-    {% endfor %}
+    {% if grupos %}
 
     <div class="menu-resultados">
 
-        {% for grupo, times in grupos_dict.items() %}
-        <div class="card">
+        {% for grupo, times in grupos.items() %}
+        <div class="card grupo-card">
 
             <h3>Grupo {{ grupo }}</h3>
+
+            <!-- ========================= -->
+            <!-- CLASSIFICAÇÃO -->
+            <!-- ========================= -->
 
             <table class="tabela">
                 <thead>
                     <tr>
+                        <th>#</th>
                         <th>Time</th>
-                        <th>Status</th>
+                        <th>Pontos</th>
                     </tr>
                 </thead>
-                <tbody>
 
-                {% for time, tipo in times %}
-                <tr>
-                    <td>{{ time }}</td>
-                    <td>
-                        {% if tipo == 'direto' %}
-                            ✅ Direto
-                        {% elif tipo == 'repescagem' %}
-                            🔁 Repescagem
-                        {% else %}
-                            —
-                        {% endif %}
-                    </td>
+                <tbody>
+                {% for t in times %}
+                <tr class="{% if t.classificado %}classificado{% endif %}">
+                    <td>{{ loop.index }}</td>
+                    <td>{{ t.time }}</td>
+                    <td>{{ t.pontos|int }}</td>
                 </tr>
                 {% endfor %}
-
                 </tbody>
             </table>
+
+            <!-- ========================= -->
+            <!-- ⚽ JOGOS (VISUAL NOVO) -->
+            <!-- ========================= -->
+
+            <h4 class="titulo-jogos">⚽ Jogos</h4>
+
+            {% set jogos = jogos_grupos.get(grupo, []) %}
+
+            {% for rodada_num in [12, 13, 14] %}
+
+            <div class="bloco-rodada">
+
+                <div class="rodada-titulo">
+                    Rodada {{ rodada_num }}
+                </div>
+
+                {% for j in jogos if j.rodada == rodada_num %}
+                <div class="jogo-linha">
+
+                    <span class="time time-a">{{ j.time_a }}</span>
+
+                    <span class="placar">
+                        {{ j.pontos_a if j.pontos_a is not none else "-" }}
+                        x
+                        {{ j.pontos_b if j.pontos_b is not none else "-" }}
+                    </span>
+
+                    <span class="time time-b">{{ j.time_b }}</span>
+
+                </div>
+                {% endfor %}
+
+            </div>
+
+            {% endfor %}
 
         </div>
         {% endfor %}
 
     </div>
 
+    {% else %}
+    <p>⚠️ Ainda não há dados dos grupos.</p>
+    {% endif %}
+
 </div>
 
 {% endif %}
 
-
 <!-- ========================= -->
 <!-- 🔁 REPESCAGEM -->
 <!-- ========================= -->
-{% if rodada == 10 %}
+
+{% if repescagem and repescagem|length > 0 %}
 
 <div class="card">
     <h2>🔁 Repescagem</h2>
-
-    {% if repescagem and repescagem|length > 0 %}
 
     <table class="tabela">
         <thead>
@@ -104,11 +131,17 @@
 
         <tbody>
 
-        {% for grupo, a, b in repescagem %}
+        {% for grupo, a, b, pa, pb in repescagem %}
         <tr>
             <td>{{ grupo }}</td>
             <td>{{ a }}</td>
-            <td>x</td>
+
+            <td>
+                {{ pa if pa is not none else "-" }}
+                x
+                {{ pb if pb is not none else "-" }}
+            </td>
+
             <td>{{ b }}</td>
         </tr>
         {% endfor %}
@@ -116,27 +149,19 @@
         </tbody>
     </table>
 
-    {% else %}
-
-    <p>Sem confrontos de repescagem.</p>
-
-    {% endif %}
-
 </div>
 
 {% endif %}
 
-
 <!-- ========================= -->
 <!-- ✅ PÓS REPESCAGEM -->
 <!-- ========================= -->
-{% if rodada >= 11 %}
 
+{% if rodada >= 11 %}
 <div class="card">
     <h2>✅ Grupos Completos</h2>
     <p>Todos os times já foram definidos após a repescagem.</p>
 </div>
-
 {% endif %}
 
 </div>
