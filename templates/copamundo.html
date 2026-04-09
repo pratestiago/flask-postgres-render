@@ -46,7 +46,13 @@
                     <tr>
                         <th>#</th>
                         <th>Time</th>
-                        <th>Pontos</th>
+                        <th>P</th>
+<th>V</th>
+<th>E</th>
+<th>D</th>
+<th>PF</th>
+<th>PS</th>
+<th>SG</th>
                     </tr>
                 </thead>
 
@@ -55,7 +61,13 @@
                 <tr class="{% if t.classificado %}classificado{% endif %}">
                     <td>{{ loop.index }}</td>
                     <td>{{ t.time }}</td>
-                    <td>{{ t.pontos|int }}</td>
+                    <td>{{ t.pontos }}</td>
+<td>{{ t.vitorias }}</td>
+<td>{{ t.empates }}</td>
+<td>{{ t.derrotas }}</td>
+<td>{{ t.pf }}</td>
+<td>{{ t.ps }}</td>
+<td>{{ t.saldo }}</td>
                 </tr>
                 {% endfor %}
                 </tbody>

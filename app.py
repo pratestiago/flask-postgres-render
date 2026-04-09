@@ -848,6 +848,12 @@ def copamundo():
             ))
 
         WHERE cr.ano = %s
+ORDER BY 
+    CASE 
+        WHEN cr.grupo >= 'N' THEN 0
+        ELSE 1
+    END,
+    cr.grupo
     """, (
         rodada_consulta, rodada, ano,
         rodada_consulta, rodada, ano,

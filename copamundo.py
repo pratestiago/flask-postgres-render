@@ -111,15 +111,26 @@ def processar_copa_mundo(conn, ano, rodada):
     # RODADA 11 → SÓ REPESCAGEM
     # =========================
     elif rodada == 11:
-        print("[Copa Mundo] Rodada 11 - Repescagem")
+        print("[Copa Mundo] Rodada 11 - Repescagem + gerar jogos")
+
         rodada_11_repescagem(cursor, ano)
+
+        # evita duplicar
+        cursor.execute("""
+            SELECT COUNT(*)
+            FROM copamundo_jogos
+            WHERE ano = %s
+        """, (ano,))
+
+        if cursor.fetchone()[0] == 0:
+            gerar_jogos_grupos(cursor, ano)
 
     # =========================
     # RODADA 12 → COMEÇA GRUPOS
     # =========================
     elif rodada == 12:
         print("[Copa Mundo] Rodada 12 - Início da Fase de Grupos")
-        gerar_jogos_grupos(cursor, ano)
+        
         resolver_jogos_grupos(cursor, ano, rodada)
 
     # =========================
@@ -439,24 +450,51 @@ def get_classificacao_grupos(cursor, ano):
     for grupo, ta, tb, pa, pb in jogos:
 
         tabela.setdefault(grupo, {})
-        tabela[grupo].setdefault(ta, 0)
-        tabela[grupo].setdefault(tb, 0)
+        
+        for t in [ta, tb]:
+            tabela[grupo].setdefault(t, {
+                "pts": 0,
+                "vitorias": 0,
+                "empates": 0,
+                "derrotas": 0,
+                "pf": 0,
+                "ps": 0
+            })
 
-    # só processa se ambos tiverem pontuação
-    # ignora jogo não processado (ambos NULL)
+        # ignora jogo não jogado
         if pa is None and pb is None:
             continue
 
-        # trata parcialmente (segurança)
         pa = pa or 0
         pb = pb or 0
 
+        # soma gols/pontos feitos e sofridos
+        tabela[grupo][ta]["pf"] += pa
+        tabela[grupo][ta]["ps"] += pb
+
+        tabela[grupo][tb]["pf"] += pb
+        tabela[grupo][tb]["ps"] += pa
+
+        # resultado
+        if pa > pb:
+            tabela[grupo][ta]["vitorias"] += 1
+            tabela[grupo][tb]["derrotas"] += 1
+
+        elif pb > pa:
+            tabela[grupo][tb]["vitorias"] += 1
+            tabela[grupo][ta]["derrotas"] += 1
+
+        else:
+            tabela[grupo][ta]["empates"] += 1
+            tabela[grupo][tb]["empates"] += 1
+
+        # pontos campeonato
         pta, ptb = calcular_pontos(pa, pb)
 
-        tabela[grupo][ta] += pta
-        tabela[grupo][tb] += ptb
+        tabela[grupo][ta]["pts"] += pta
+        tabela[grupo][tb]["pts"] += ptb
 
-    # pegar nomes dos times
+    # nomes dos times
     cursor.execute("SELECT id, nome_time FROM times")
     nomes = dict(cursor.fetchall())
 
@@ -464,18 +502,32 @@ def get_classificacao_grupos(cursor, ano):
 
     for grupo, times in tabela.items():
 
-        ranking = sorted(times.items(), key=lambda x: x[1], reverse=True)
+        ranking = sorted(
+            times.items(),
+            key=lambda x: (
+                x[1]["pts"],
+                x[1]["pf"] - x[1]["ps"],  # saldo
+                x[1]["pf"]               # ataque
+            ),
+            reverse=True
+        )
 
         grupos[grupo] = [
             {
                 "time": nomes[tid],
-                "pontos": pts,
+                "pontos": dados["pts"],
+                "vitorias": dados["vitorias"],
+                "empates": dados["empates"],
+                "derrotas": dados["derrotas"],
+                "pf": dados["pf"],
+                "ps": dados["ps"],
+                "saldo": dados["pf"] - dados["ps"],
                 "classificado": i < 2
             }
-            for i, (tid, pts) in enumerate(ranking)
+            for i, (tid, dados) in enumerate(ranking)
         ]
 
-    return grupos                                 
+    return grupos                                
 
 # =========================
 # EXECUÇÃO DIRETA
@@ -488,7 +540,7 @@ if __name__ == "__main__":
     conn = get_connection()
 
     ano = 2026
-    rodada = 12
+    rodada = 14    
 
     processar_copa_mundo(conn, ano, rodada)
 
