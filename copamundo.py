@@ -354,12 +354,12 @@ def calcular_pontos(pa, pb):
 
     if pa > pb:
         if pa - pb <= 5:
-            return 2, 0
+            return 2, 1  # ✅ mudou aqui
         return 3, 0
 
     elif pb > pa:
         if pb - pa <= 5:
-            return 0, 2
+            return 1, 2  # ✅ mudou aqui
         return 0, 3
 
     else:
@@ -540,7 +540,7 @@ if __name__ == "__main__":
     conn = get_connection()
 
     ano = 2026
-    rodada = 14    
+    rodada = 13    
 
     processar_copa_mundo(conn, ano, rodada)
 
