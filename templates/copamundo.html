@@ -20,6 +20,48 @@
 {% endif %}
 
 <!-- ========================= -->
+<!-- 🏆 MATA-MATA -->
+<!-- ========================= -->
+
+{% if mata_mata and mata_mata|length > 0 %}
+
+<div class="card">
+    <h2>🏆 Mata-Mata</h2>
+
+    {% for fase, jogos in mata_mata.items() %}
+
+    <div class="card" style="margin-top:10px;">
+        <h3>{{ fase }}</h3>
+
+        {% for j in jogos %}
+        <div class="jogo-linha">
+
+            <span class="jogo-numero">
+                Jogo -  {{ loop.index }} - > 
+            </span>
+
+            <span class="time">{{ j.time_a }}</span>
+
+            <span class="placar">
+                {{ j.pontos_a if j.pontos_a is not none else "-" }}
+                x
+                {{ j.pontos_b if j.pontos_b is not none else "-" }}
+            </span>
+
+            <span class="time">{{ j.time_b }}</span>
+
+        </div>
+        {% endfor %}
+
+    </div>
+
+    {% endfor %}
+
+</div>
+
+{% endif %}
+
+<!-- ========================= -->
 <!-- 🏆 FASE DE GRUPOS -->
 <!-- ========================= -->
 

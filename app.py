@@ -894,6 +894,42 @@ ORDER BY
             "pontos_b": pb
         })
 
+
+    
+   # =========================
+    # MATA-MATA
+    # =========================
+    cursor.execute("""
+                SELECT 
+                    f.nome_fase,
+                    c.ordem_na_fase,
+                    c.lado_chave,
+                    ta.nome_time,
+                    tb.nome_time,
+                    c.pontuacao_a,
+                    c.pontuacao_b
+                FROM competicao_confrontos c
+                JOIN competicao_fases f ON f.id = c.fase_id
+                JOIN times ta ON ta.id = c.time_a_id
+                JOIN times tb ON tb.id = c.time_b_id
+                WHERE c.competicao_id = 4
+                ORDER BY f.ordem, c.ordem_na_fase
+    """)
+
+    dados = cursor.fetchall()
+
+    mata_mata = {}
+
+    for fase, ordem, lado, a, b, pa, pb in dados:
+        mata_mata.setdefault(fase, []).append({
+            "ordem": ordem,
+            "lado": lado,
+            "time_a": a,
+            "time_b": b,
+            "pontos_a": pa,
+            "pontos_b": pb
+        })
+
     cursor.close()
     conn.close()
 
@@ -902,7 +938,8 @@ ORDER BY
         rodada=rodada,
         grupos=grupos,
         repescagem=repescagem,
-        jogos_grupos=jogos_grupos
+        jogos_grupos=jogos_grupos,
+        mata_mata=mata_mata
     )
     
 @app.route("/resultados/duplas")

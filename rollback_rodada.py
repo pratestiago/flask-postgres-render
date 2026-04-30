@@ -4,7 +4,6 @@ from qual_banco_conectado import get_connection
 # =========================
 # FUNÇÃO DE ROLLBACK
 # =========================
-
 def rollback_rodada(ano, rodada):
 
     conn = get_connection()
@@ -14,7 +13,13 @@ def rollback_rodada(ano, rodada):
         print(f"\n⚠️ Iniciando rollback: Ano {ano} - Rodada {rodada}")
 
         # =========================
-        # 🔍 VERIFICAR SITUAÇÃO ATUAL
+        # DEFINIR LIMITE REAL
+        # =========================
+        # 🔥 rollback(12) → volta pra 11
+        rodada_limite = rodada - 1
+
+        # =========================
+        # VERIFICAR SITUAÇÃO ATUAL
         # =========================
         cursor.execute("""
             SELECT MAX(numero)
@@ -26,7 +31,7 @@ def rollback_rodada(ano, rodada):
 
         print(f"\n⚠️ ATENÇÃO!")
         print(f"Rodada atual no banco: {max_rodada}")
-        print(f"O rollback vai apagar da rodada {rodada} até {max_rodada}")
+        print(f"O sistema voltará para a rodada {rodada_limite}")
 
         confirmacao = input("Digite 'SIM' para continuar: ")
 
@@ -35,22 +40,22 @@ def rollback_rodada(ano, rodada):
             return
 
         # =========================
-        # 1. DELETAR COPA BRASIL
+        # 1. LIMPAR MATA-MATA
         # =========================
-        print("🧹 Limpando Copa Brasil...")
+        print("🧹 Limpando Mata-Matas...")
 
         cursor.execute("""
             DELETE FROM competicao_confrontos
-            WHERE rodada >= %s
-        """, (rodada,))
+            WHERE rodada > %s
+        """, (rodada_limite,))
 
         cursor.execute("""
             DELETE FROM competicao_fases
-            WHERE rodada >= %s
-        """, (rodada,))
+            WHERE rodada > %s
+        """, (rodada_limite,))
 
         # =========================
-        # 2. DELETAR RESULTADOS
+        # 2. LIMPAR RESULTADOS
         # =========================
         print("🧹 Limpando resultados...")
 
@@ -58,42 +63,86 @@ def rollback_rodada(ano, rodada):
             DELETE FROM resultado_rodada
             WHERE rodada_id IN (
                 SELECT id FROM rodadas
-                WHERE ano = %s AND numero >= %s
+                WHERE ano = %s AND numero > %s
             )
-        """, (ano, rodada))
+        """, (ano, rodada_limite))
 
         # =========================
-        # 3. DELETAR RODADAS
+        # 3. LIMPAR RODADAS
         # =========================
         print("🧹 Removendo rodadas...")
 
         cursor.execute("""
             DELETE FROM rodadas
-            WHERE ano = %s AND numero >= %s
-        """, (ano, rodada))
+            WHERE ano = %s AND numero > %s
+        """, (ano, rodada_limite))
 
         # =========================
-        # 4. BUSCAR ÚLTIMA RODADA
+        # 4. AJUSTAR COPA MUNDO
         # =========================
-        cursor2 = conn.cursor()
+        print("🧹 Ajustando Copa Mundo...")
 
-        cursor2.execute("""
+        # 🔴 Se voltou antes do mata-mata → remove tudo
+        if rodada_limite <= 14:
+            cursor.execute("""
+                DELETE FROM competicao_confrontos
+                WHERE competicao_id = 4
+            """)
+            cursor.execute("""
+                DELETE FROM competicao_fases
+                WHERE competicao_id = 4
+            """)
+
+        # 🔴 Se voltou antes do fim dos grupos → limpar resultados
+        if rodada_limite <= 13:
+            cursor.execute("""
+                UPDATE copamundo_jogos
+                SET pontos_a = NULL,
+                    pontos_b = NULL
+                WHERE ano = %s AND rodada > %s
+            """, (ano, rodada_limite))
+
+        # 🔴 Se voltou antes do início dos grupos → remover jogos
+        if rodada_limite <= 11:
+            cursor.execute("""
+                DELETE FROM copamundo_jogos
+                WHERE ano = %s
+            """, (ano,))
+
+        # 🔴 Se voltou antes da repescagem → remover tudo
+        if rodada_limite <= 10:
+            cursor.execute("""
+                DELETE FROM copamundo_repescagem
+                WHERE ano = %s
+            """, (ano,))
+
+            cursor.execute("""
+                DELETE FROM copamundo_grupos
+                WHERE ano = %s
+            """, (ano,))
+
+        # =========================
+        # 5. BUSCAR ÚLTIMA RODADA
+        # =========================
+        cursor.execute("""
             SELECT MAX(numero)
             FROM rodadas
             WHERE ano = %s
         """, (ano,))
 
-        ultima_rodada = cursor2.fetchone()[0]
-        cursor2.close()
+        ultima_rodada = cursor.fetchone()[0]
 
         # =========================
-        # 5. REPROCESSAR COPA
+        # 6. REPROCESSAR
         # =========================
         if ultima_rodada:
             print(f"🔄 Reprocessando rodada {ultima_rodada}...")
 
             from copabrasil_v2 import processar_copa_brasil
+            from copamundo import processar_copa_mundo
+
             processar_copa_brasil(conn, ano, ultima_rodada)
+            processar_copa_mundo(conn, ano, ultima_rodada)
 
         # =========================
         # FINALIZAR
@@ -101,11 +150,7 @@ def rollback_rodada(ano, rodada):
         conn.commit()
 
         print("\n✅ Rollback realizado com sucesso!")
-
-        if ultima_rodada:
-            print(f"📊 Sistema voltou para a rodada {ultima_rodada}")
-        else:
-            print("📊 Nenhuma rodada restante no banco")
+        print(f"📊 Sistema voltou para a rodada {ultima_rodada}")
 
     except Exception as e:
         conn.rollback()
@@ -118,9 +163,8 @@ def rollback_rodada(ano, rodada):
 
 
 # =========================
-# EXECUÇÃO VIA TERMINAL
+# EXECUÇÃO
 # =========================
-
 if __name__ == "__main__":
     try:
         ano = int(input("Ano: "))
@@ -129,4 +173,4 @@ if __name__ == "__main__":
         rollback_rodada(ano, rodada)
 
     except ValueError:
-        print("❌ Entrada inválida. Digite números.")
+        print("❌ Entrada inválida.")

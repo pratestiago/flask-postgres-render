@@ -1076,7 +1076,6 @@ SELECT setval(
     WHERE cg.ano = 2026
 
 
-dados = cursor.fetchall()
 
 
 
@@ -1088,3 +1087,9 @@ GROUP BY grupo;
 SELECT pontos
 FROM resultado_rodada
 LIMIT 10;
+
+
+ALTER TABLE competicao_confrontos
+ADD COLUMN lado_chave VARCHAR(10);
+
+SELECT lado_chave FROM competicao_confrontos LIMIT 5;
