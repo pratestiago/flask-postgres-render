@@ -820,7 +820,9 @@ def copamundo():
     # =========================
     # REPESCAGEM (COM PONTOS)
     # =========================
-    rodada_consulta = rodada if rodada >= 11 else None
+  # =========================
+    # REPESCAGEM (COM PONTOS)
+    # =========================
 
     cursor.execute("""
         SELECT 
@@ -833,32 +835,27 @@ def copamundo():
         JOIN times ta ON ta.id = cr.time_a_id
         JOIN times tb ON tb.id = cr.time_b_id
 
+        -- 🔥 FIXA RODADA 11
+        LEFT JOIN rodadas r11 
+            ON r11.numero = 11 AND r11.ano = %s
+
         LEFT JOIN resultado_rodada ra 
             ON ra.time_id = cr.time_a_id
-            AND (%s IS NOT NULL AND ra.rodada_id = (
-                SELECT id FROM rodadas 
-                WHERE numero = %s AND ano = %s
-            ))
+            AND ra.rodada_id = r11.id
 
         LEFT JOIN resultado_rodada rb 
             ON rb.time_id = cr.time_b_id
-            AND (%s IS NOT NULL AND rb.rodada_id = (
-                SELECT id FROM rodadas 
-                WHERE numero = %s AND ano = %s
-            ))
+            AND rb.rodada_id = r11.id
 
         WHERE cr.ano = %s
-ORDER BY 
-    CASE 
-        WHEN cr.grupo >= 'N' THEN 0
-        ELSE 1
-    END,
-    cr.grupo
-    """, (
-        rodada_consulta, rodada, ano,
-        rodada_consulta, rodada, ano,
-        ano
-    ))
+
+        ORDER BY 
+            CASE 
+                WHEN cr.grupo >= 'N' THEN 0
+                ELSE 1
+            END,
+            cr.grupo
+    """, (ano, ano))
 
     repescagem = cursor.fetchall()
 
