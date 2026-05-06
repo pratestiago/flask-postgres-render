@@ -740,8 +740,8 @@ def criar_proxima_fase(cursor, ano, nome_fase, ordem_fase, rodada_base):
         jogos = []
         total = len(times)
 
-        for i in range(0, total, 2):
-            jogos.append((times[i], times[i+1]))
+        for i in range(total // 2):
+            jogos.append((times[i], times[total - 1 - i]))
 
         return jogos
 
