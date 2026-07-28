@@ -2,6 +2,7 @@ import csv
 from qual_banco_conectado import get_connection
 import os
 from copabrasil_v2 import processar_copa_brasil
+from champions import processar_champions
 
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -144,6 +145,9 @@ def importar_csv():
         print(f"Rodada importada: {rodada_importada}")
 
         processar_copa_brasil(conn, ano_importado, rodada_importada)
+        processar_champions(conn, ano_importado, rodada_importada)
+        
+        conn.commit()
 
 
 

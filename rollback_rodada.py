@@ -52,7 +52,13 @@ def rollback_rodada(ano, rodada):
         cursor.execute("""
             DELETE FROM competicao_fases
             WHERE rodada > %s
-        """, (rodada_limite,))
+            AND competicao_id NOT IN (
+                SELECT id
+                FROM competicoes
+                WHERE tipo = 'champions'
+                    AND ano = %s
+            )
+        """, (rodada_limite, ano))
 
         # =========================
         # 2. LIMPAR RESULTADOS
@@ -120,9 +126,30 @@ def rollback_rodada(ano, rodada):
                 DELETE FROM copamundo_grupos
                 WHERE ano = %s
             """, (ano,))
+            
+            
+        # =========================
+        # 5. AJUSTAR CHAMPIONS
+        # =========================
+        print("🧹 Ajustando Champions...")
+
+        # Rollback da rodada 20 volta para a rodada 19.
+        # Nesse caso, remove a classificação inicial da Champions.
+        if rodada_limite < 20:
+            cursor.execute("""
+                DELETE FROM competicao_times
+                WHERE competicao_id IN (
+                    SELECT id
+                    FROM competicoes
+                    WHERE tipo = 'champions'
+                      AND ano = %s
+                )
+            """, (ano,))
+
+            print("🧹 Participantes da Champions removidos.")    
 
         # =========================
-        # 5. BUSCAR ÚLTIMA RODADA
+        # 6. BUSCAR ÚLTIMA RODADA
         # =========================
         cursor.execute("""
             SELECT MAX(numero)
@@ -131,9 +158,11 @@ def rollback_rodada(ano, rodada):
         """, (ano,))
 
         ultima_rodada = cursor.fetchone()[0]
+        
+        
 
         # =========================
-        # 6. REPROCESSAR
+        # 7. REPROCESSAR
         # =========================
         if ultima_rodada:
             print(f"🔄 Reprocessando rodada {ultima_rodada}...")

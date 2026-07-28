@@ -939,6 +939,139 @@ def copamundo():
         mata_mata=mata_mata
     )
     
+# =========================
+# CHAMPIONS
+# =========================
+
+@app.route("/champions")
+def champions():
+
+    ano = 2026
+
+    conn = get_connection()
+    cursor = conn.cursor()
+
+    try:
+        # =========================
+        # BUSCAR COMPETIÇÃO
+        # =========================
+        cursor.execute("""
+            SELECT id, nome
+            FROM competicoes
+            WHERE tipo = 'champions'
+              AND ano = %s
+            LIMIT 1
+        """, (ano,))
+
+        competicao = cursor.fetchone()
+
+        if not competicao:
+            abort(404)
+
+        competicao_id, competicao_nome = competicao
+
+        # =========================
+        # CLASSIFICADOS DIRETAMENTE
+        # =========================
+        cursor.execute("""
+            SELECT
+                ct.ranking_inicial,
+                t.nome_time,
+                c.nome AS cartoleiro
+            FROM competicao_times ct
+            JOIN times t
+                ON t.id = ct.time_id
+            JOIN cartoleiros c
+                ON c.id = t.cartoleiro_id
+            WHERE ct.competicao_id = %s
+              AND ct.status = 'direto'
+            ORDER BY ct.ranking_inicial
+        """, (competicao_id,))
+
+        classificados_diretos = cursor.fetchall()
+
+        # =========================
+        # CONFRONTOS DA REPESCAGEM
+        # =========================
+        cursor.execute("""
+            SELECT
+                cc.ordem_na_fase,
+                cc.ranking_a,
+                ta.nome_time AS time_a,
+                ca.nome AS cartoleiro_a,
+                cc.pontuacao_a,
+                cc.ranking_b,
+                tb.nome_time AS time_b,
+                cb.nome AS cartoleiro_b,
+                cc.pontuacao_b,
+                cc.status,
+                cf.rodada
+            FROM competicao_confrontos cc
+            JOIN competicao_fases cf
+                ON cf.id = cc.fase_id
+            LEFT JOIN times ta
+                ON ta.id = cc.time_a_id
+            LEFT JOIN cartoleiros ca
+                ON ca.id = ta.cartoleiro_id
+            LEFT JOIN times tb
+                ON tb.id = cc.time_b_id
+            LEFT JOIN cartoleiros cb
+                ON cb.id = tb.cartoleiro_id
+            WHERE cc.competicao_id = %s
+              AND LOWER(cf.nome_fase) = 'repescagem'
+            ORDER BY cc.ordem_na_fase
+        """, (competicao_id,))
+
+        repescagem_db = cursor.fetchall()
+
+        # =========================
+        # ORGANIZAR REPESCAGEM
+        # =========================
+        repescagem = []
+
+        for (
+            ordem,
+            ranking_a,
+            time_a,
+            cartoleiro_a,
+            pontuacao_a,
+            ranking_b,
+            time_b,
+            cartoleiro_b,
+            pontuacao_b,
+            status,
+            rodada
+        ) in repescagem_db:
+
+            repescagem.append({
+                "ordem": ordem,
+
+                "ranking_a": ranking_a,
+                "time_a": time_a,
+                "cartoleiro_a": cartoleiro_a,
+                "pontuacao_a": pontuacao_a,
+
+                "ranking_b": ranking_b,
+                "time_b": time_b,
+                "cartoleiro_b": cartoleiro_b,
+                "pontuacao_b": pontuacao_b,
+
+                "status": status,
+                "rodada": rodada
+            })
+
+    finally:
+        cursor.close()
+        conn.close()
+
+    return render_template(
+        "champions.html",
+        ano=ano,
+        competicao_nome=competicao_nome,
+        classificados_diretos=classificados_diretos,
+        repescagem=repescagem
+    )    
+    
 @app.route("/resultados/duplas")
 def duplas():
     return render_template("duplas.html")

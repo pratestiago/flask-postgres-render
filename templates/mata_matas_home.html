@@ -3,14 +3,47 @@
 {% block title %}Mata-Matas{% endblock %}
 
 {% block content %}
+
 <h1>🏆 Mata-Matas</h1>
 
 <ul class="menu menu-horizontal">
-    {% for id, nome, tipo in competicoes %}
-        <li>
-            <a href="/mata-matas/{{ id }}">{{ nome }}</a>
-        </li>
-    {% endfor %}
+
+{% for id, nome, tipo in competicoes %}
+
+    {% set tipo_normalizado = tipo|lower|trim %}
+
+    <li>
+
+        {% if tipo_normalizado == "champions" %}
+
+            <a href="{{ url_for('champions') }}">
+                {{ nome }}
+            </a>
+
+        {% elif tipo_normalizado in ["copa_brasil", "copabrasil"] %}
+
+            <a href="{{ url_for('copabrazil') }}">
+                {{ nome }}
+            </a>
+
+        {% elif tipo_normalizado in ["copa_mundo", "copamundo"] %}
+
+            <a href="{{ url_for('copamundo') }}">
+                {{ nome }}
+            </a>
+
+        {% else %}
+
+            <a href="{{ url_for('em_desenvolvimento') }}">
+                {{ nome }}
+            </a>
+
+        {% endif %}
+
+    </li>
+
+{% endfor %}
+
 </ul>
 
 {% endblock %}

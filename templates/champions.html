@@ -1,0 +1,172 @@
+{% extends "base.html" %}
+
+{% block title %}{{ competicao_nome }}{% endblock %}
+
+{% block content %}
+
+<div class="home-header">
+    <h1>🏆 {{ competicao_nome }}</h1>
+    <p>Temporada {{ ano }}</p>
+</div>
+
+<div class="dashboard">
+
+    <!-- CLASSIFICADOS DIRETAMENTE -->
+    <div class="card">
+
+        <div class="card-header">
+            <h2>⭐ Classificados diretamente</h2>
+            <span>{{ classificados_diretos|length }} times</span>
+        </div>
+
+        <div class="card-body">
+
+            {% if classificados_diretos %}
+
+                <table class="tabela">
+
+                    <thead>
+                        <tr>
+                            <th>Ranking</th>
+                            <th>Time</th>
+                            <th>Cartoleiro</th>
+                        </tr>
+                    </thead>
+
+                    <tbody>
+
+                        {% for ranking, time, cartoleiro in classificados_diretos %}
+
+                            <tr>
+                                <td>{{ ranking }}</td>
+                                <td>{{ time }}</td>
+                                <td>{{ cartoleiro }}</td>
+                            </tr>
+
+                        {% endfor %}
+
+                    </tbody>
+
+                </table>
+
+            {% else %}
+
+                <p>⏳ Classificação ainda não definida.</p>
+
+            {% endif %}
+
+        </div>
+
+    </div>
+
+
+    <!-- REPESCAGEM -->
+    <div class="card">
+
+        <div class="card-header">
+            <h2>⚔️ Repescagem</h2>
+
+            {% if repescagem %}
+                <span>Rodada {{ repescagem[0].rodada }}</span>
+            {% endif %}
+        </div>
+
+        <div class="card-body">
+
+            {% if repescagem %}
+
+                <table class="tabela">
+
+                    <thead>
+                        <tr>
+                            <th>Ranking</th>
+                            <th>Time A</th>
+                            <th>Pts</th>
+                            <th></th>
+                            <th>Pts</th>
+                            <th>Time B</th>
+                            <th>Ranking</th>
+                        </tr>
+                    </thead>
+
+                    <tbody>
+
+                        {% for confronto in repescagem %}
+
+                            <tr>
+
+                                <td>
+                                    {{ confronto.ranking_a or "—" }}
+                                </td>
+
+                                <td>
+                                    <strong>
+                                        {{ confronto.time_a or "A definir" }}
+                                    </strong>
+
+                                    {% if confronto.cartoleiro_a %}
+                                        <br>
+                                        <small>
+                                            {{ confronto.cartoleiro_a }}
+                                        </small>
+                                    {% endif %}
+                                </td>
+
+                                <td>
+                                    {% if confronto.pontuacao_a is not none %}
+                                        {{ "%.2f"|format(confronto.pontuacao_a) }}
+                                    {% else %}
+                                        -
+                                    {% endif %}
+                                </td>
+
+                                <td>
+                                    x
+                                </td>
+
+                                <td>
+                                    {% if confronto.pontuacao_b is not none %}
+                                        {{ "%.2f"|format(confronto.pontuacao_b) }}
+                                    {% else %}
+                                        -
+                                    {% endif %}
+                                </td>
+
+                                <td>
+                                    <strong>
+                                        {{ confronto.time_b or "A definir" }}
+                                    </strong>
+
+                                    {% if confronto.cartoleiro_b %}
+                                        <br>
+                                        <small>
+                                            {{ confronto.cartoleiro_b }}
+                                        </small>
+                                    {% endif %}
+                                </td>
+
+                                <td>
+                                    {{ confronto.ranking_b or "—" }}
+                                </td>
+
+                            </tr>
+
+                        {% endfor %}
+
+                    </tbody>
+
+                </table>
+
+            {% else %}
+
+                <p>⏳ Confrontos da repescagem ainda não criados.</p>
+
+            {% endif %}
+
+        </div>
+
+    </div>
+
+</div>
+
+{% endblock %}
