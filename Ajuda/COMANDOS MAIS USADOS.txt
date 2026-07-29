@@ -1,3 +1,6 @@
+
+ venv\Scripts\activate          
+
 python app.py
 python qUal_banco_conectado.py
  $env:AMBIENTE="TESTE"         
@@ -12,4 +15,12 @@ git commit -m "rodada 20 - 2026 e champions de duplas  "
  git add .                
 git status                                                  
  python importar_rodada_csv.py                          
-git commit -m "rodada 20 - 2026 e champions  "                                                                                          
+git commit -m "rodada 20 - 2026 e champions  "                         
+ python rollback_rodada.py                                       
+
+
+ Remove-Item Env:AMBIENTE -ErrorAction SilentlyContinue           
+
+
+$env:AMBIENTE="PROD"                                                                                       
+                                                     
