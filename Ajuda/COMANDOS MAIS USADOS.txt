@@ -1,0 +1,15 @@
+python app.py
+python qUal_banco_conectado.py
+ $env:AMBIENTE="TESTE"         
+ remove-Item Env:DATABASE_URL  
+python backup_postgres.py     
+python duplas_importar.py     
+
+$env:DATABASE_URL=  ‘postgresql://neondb_owner:npg_i4nYMKJwS8hF@ep-damp-bar-adz4rcgx-pooler.c-2.us-east-1.aws.neon.tech/neondb?sslmode=require&channel_binding=require’
+
+git push 
+git commit -m "rodada 20 - 2026 e champions de duplas  "   
+ git add .                
+git status                                                  
+ python importar_rodada_csv.py                          
+git commit -m "rodada 20 - 2026 e champions  "                                                                                          
