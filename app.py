@@ -1,6 +1,7 @@
 from flask import Flask, render_template, abort
 from qual_banco_conectado import print_info_conexao, get_info_conexao, get_connection
 from copamundo import get_classificacao_grupos
+from champions_duplas import processar_champions_duplas
 import psycopg2
 import os
 
@@ -1604,7 +1605,47 @@ def gerar_bracket_duplas(ranking, pontos_por_rodada):
 
     return fases, campeao
 
+@app.route("/resultados/duplas/champions")
+def resultados_duplas_champions():
 
+    ano = 2026
+    conn = get_connection()
+    cursor = conn.cursor()
+
+    try:
+        cursor.execute("""
+            SELECT MAX(numero)
+            FROM rodadas_duplas
+            WHERE ano = %s
+        """, (ano,))
+
+        rodada_real = cursor.fetchone()[0]
+
+        if rodada_real is None:
+            rodada_real = 0
+
+        # Temporário, apenas para testar a Champions no front
+        rodada_atual = 20
+
+        resultado = processar_champions_duplas(
+            conn,
+            ano,
+            rodada_atual
+        )
+
+        return render_template(
+            "champions_duplas.html",
+            resultado=resultado,
+            ranking=resultado["ranking"],
+            grupos=resultado["grupos"],
+            ano=ano,
+            rodada_atual=rodada_atual,
+            rodada_real=rodada_real
+        )
+
+    finally:
+        cursor.close()
+        conn.close()
 
 
 @app.route("/direcao")

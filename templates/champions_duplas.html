@@ -1,0 +1,90 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<div class="container mt-4">
+
+    <h1>Champions de Duplas</h1>
+
+    <p>
+        Ano {{ ano }} — situação até a rodada {{ rodada_atual }}
+    </p>
+
+    <hr>
+
+    <h2>Ranking da rodada 20</h2>
+
+    <table class="table table-striped">
+        <thead>
+            <tr>
+                <th>Posição</th>
+                <th>Dupla</th>
+                <th>Integrantes</th>
+                <th>Pontos</th>
+            </tr>
+        </thead>
+
+        <tbody>
+            {% for dupla in ranking %}
+                <tr>
+                    <td>{{ dupla.posicao }}º</td>
+                    <td>{{ dupla.nome }}</td>
+                    <td>{{ dupla.times }}</td>
+                    <td>{{ "%.2f"|format(dupla.pontos) }}</td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <hr>
+
+    <h2>Grupos</h2>
+
+    <div class="row">
+
+        {% for letra, duplas in grupos.items() %}
+
+            <div class="col-md-6 col-lg-4 mb-4">
+
+                <div class="card">
+
+                    <div class="card-header">
+                        <strong>Grupo {{ letra }}</strong>
+                    </div>
+
+                    <div class="card-body">
+
+                        {% for dupla in duplas %}
+
+                            <div class="mb-3">
+
+                                <strong>
+                                    {{ dupla.posicao }}º —
+                                    {{ dupla.nome }}
+                                </strong>
+
+                                <div>
+                                    {{ dupla.times }}
+                                </div>
+
+                                <small>
+                                    {{ "%.2f"|format(dupla.pontos) }} pontos
+                                </small>
+
+                            </div>
+
+                        {% endfor %}
+
+                    </div>
+
+                </div>
+
+            </div>
+
+        {% endfor %}
+
+    </div>
+
+</div>
+
+{% endblock %}
