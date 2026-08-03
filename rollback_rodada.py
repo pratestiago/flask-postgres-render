@@ -5,6 +5,11 @@ from qual_banco_conectado import get_connection
 # FUNÇÃO DE ROLLBACK
 # =========================
 def rollback_rodada(ano, rodada):
+    
+    if rodada < 20:
+        print("❌ Rollback bloqueado.")
+        print("Só é permitido fazer rollback da rodada 20 em diante.")
+        return    
 
     conn = get_connection()
     cursor = conn.cursor()
@@ -15,7 +20,7 @@ def rollback_rodada(ano, rodada):
         # =========================
         # DEFINIR LIMITE REAL
         # =========================
-        # 🔥 rollback(12) → volta pra 11
+        # Exemplo: rollback(21) → volta para a rodada 20
         rodada_limite = rodada - 1
 
         # =========================
@@ -47,8 +52,14 @@ def rollback_rodada(ano, rodada):
         cursor.execute("""
             DELETE FROM competicao_confrontos
             WHERE rodada > %s
-        """, (rodada_limite,))
-
+            AND competicao_id NOT IN (
+                SELECT id
+                FROM competicoes
+                WHERE tipo = 'champions'
+                    AND ano = %s
+            )
+        """, (rodada_limite, ano))
+        
         cursor.execute("""
             DELETE FROM competicao_fases
             WHERE rodada > %s
@@ -59,6 +70,23 @@ def rollback_rodada(ano, rodada):
                     AND ano = %s
             )
         """, (rodada_limite, ano))
+                
+        
+        # =========================
+        # JOGOS DE IDA E VOLTA
+        # =========================
+        print("🧹 Limpando jogos de ida e volta...")
+
+        cursor.execute("""
+            DELETE FROM competicao_confronto_jogos
+            WHERE rodada_id IN (
+                SELECT id
+                FROM rodadas
+                WHERE ano = %s
+                AND numero > %s
+            )
+        """, (ano, rodada_limite))
+
 
         # =========================
         # 2. LIMPAR RESULTADOS
@@ -133,9 +161,49 @@ def rollback_rodada(ano, rodada):
         # =========================
         print("🧹 Ajustando Champions...")
 
-        # Rollback da rodada 20 volta para a rodada 19.
-        # Nesse caso, remove a classificação inicial da Champions.
+        # Voltou para antes da ida da repescagem.
+        # Mantém os confrontos, mas restaura o estado inicial.
+        if rodada_limite < 21:
+            cursor.execute("""
+                UPDATE competicao_confrontos
+                SET status = 'criado',
+                    pontuacao_a = NULL,
+                    pontuacao_b = NULL,
+                    vencedor_id = NULL,
+                    perdedor_id = NULL
+                WHERE competicao_id IN (
+                    SELECT id
+                    FROM competicoes
+                    WHERE tipo = 'champions'
+                      AND ano = %s
+                )
+                  AND fase_id IN (
+                    SELECT cf.id
+                    FROM competicao_fases cf
+                    JOIN competicoes c
+                      ON c.id = cf.competicao_id
+                    WHERE c.tipo = 'champions'
+                      AND c.ano = %s
+                      AND LOWER(cf.nome_fase) = 'repescagem'
+                )
+            """, (ano, ano))
+        
+        
+        # Voltou para antes da classificação inicial.
+        # Remove confrontos e participantes da Champions.
+        
+        
         if rodada_limite < 20:
+            cursor.execute("""
+                DELETE FROM competicao_confrontos
+                WHERE competicao_id IN (
+                    SELECT id
+                    FROM competicoes
+                    WHERE tipo = 'champions'
+                      AND ano = %s
+                )
+            """, (ano,))
+
             cursor.execute("""
                 DELETE FROM competicao_times
                 WHERE competicao_id IN (
@@ -146,7 +214,7 @@ def rollback_rodada(ano, rodada):
                 )
             """, (ano,))
 
-            print("🧹 Participantes da Champions removidos.")    
+            print("🧹 Confrontos e participantes da Champions removidos.")
 
         # =========================
         # 6. BUSCAR ÚLTIMA RODADA

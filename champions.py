@@ -3,36 +3,46 @@
 
 def processar_champions(conn, ano, rodada):
 
-    if rodada != 20:
+    if rodada not in (20, 21):
         return
 
     cursor = conn.cursor()
 
     try:
-        ranking = buscar_ranking(cursor, ano, rodada)
 
-        if len(ranking) != 83:
-            raise RuntimeError(
-                f"Esperados 83 times, mas foram encontrados {len(ranking)}."
+        if rodada == 20:
+
+            ranking = buscar_ranking(cursor, ano, rodada)
+
+            if len(ranking) != 83:
+                raise RuntimeError(
+                    f"Esperados 83 times, mas foram encontrados {len(ranking)}."
+                )
+
+            diretos = ranking[:45]
+            repescagem = ranking[45:]
+
+            print(f"[Champions] Classificados diretamente: {len(diretos)}")
+            print(f"[Champions] Times na repescagem: {len(repescagem)}")
+
+            gravar_classificacao_inicial(
+                cursor,
+                ano,
+                diretos,
+                repescagem
             )
 
-        diretos = ranking[:45]
-        repescagem = ranking[45:]
+            criar_repescagem(
+                cursor,
+                ano
+            )
 
-        print(f"[Champions] Classificados diretamente: {len(diretos)}")
-        print(f"[Champions] Times na repescagem: {len(repescagem)}")
+        elif rodada == 21:
 
-        gravar_classificacao_inicial(
-            cursor,
-            ano,
-            diretos,
-            repescagem
-        )
-
-        criar_repescagem(
-            cursor,
-            ano
-        )
+            processar_ida_repescagem(
+                cursor,
+                ano
+            )
 
     finally:
         cursor.close()
@@ -274,3 +284,154 @@ def criar_repescagem(cursor, ano):
         )
 
     print("[Champions] 19 confrontos da repescagem criados.")
+    
+def processar_ida_repescagem(cursor, ano):
+    """
+    Processa a ida da repescagem da Champions.
+    """
+
+    print("[Champions] Processando ida da repescagem...")
+
+    # Localiza a competição e a fase da repescagem
+    cursor.execute(
+        """
+        SELECT
+            c.id,
+            cf.id
+        FROM competicoes c
+        JOIN competicao_fases cf
+            ON cf.competicao_id = c.id
+        WHERE c.tipo = 'champions'
+          AND c.ano = %s
+          AND LOWER(cf.nome_fase) = 'repescagem'
+        LIMIT 1
+        """,
+        (ano,),
+    )
+
+    dados = cursor.fetchone()
+
+    if not dados:
+        raise RuntimeError(
+            f"Repescagem da Champions {ano} não encontrada."
+        )
+
+    competicao_id, fase_id = dados
+
+    # Busca a rodada 21
+    cursor.execute(
+        """
+        SELECT id
+        FROM rodadas
+        WHERE ano = %s
+          AND numero = 21
+        """,
+        (ano,),
+    )
+
+    rodada = cursor.fetchone()
+
+    if not rodada:
+        raise RuntimeError(
+            f"Rodada 21 do ano {ano} não encontrada."
+        )
+
+    rodada_id = rodada[0]
+
+    # Busca os 19 confrontos da repescagem
+    cursor.execute(
+        """
+        SELECT
+            id,
+            time_a_id,
+            time_b_id
+        FROM competicao_confrontos
+        WHERE competicao_id = %s
+          AND fase_id = %s
+        ORDER BY ordem_na_fase
+        """,
+        (competicao_id, fase_id),
+    )
+
+    confrontos = cursor.fetchall()
+
+    if len(confrontos) != 19:
+        raise RuntimeError(
+            f"Esperados 19 confrontos, encontrados {len(confrontos)}."
+        )
+
+    # Grava a pontuação da ida de cada confronto
+    for confronto_id, time_a_id, time_b_id in confrontos:
+
+        cursor.execute(
+            """
+            SELECT pontos
+            FROM resultado_rodada
+            WHERE rodada_id = %s
+              AND time_id = %s
+            """,
+            (rodada_id, time_a_id),
+        )
+
+        pontos_a = cursor.fetchone()
+
+        if not pontos_a:
+            raise RuntimeError(
+                f"Pontuação não encontrada para o time {time_a_id}."
+            )
+
+        cursor.execute(
+            """
+            SELECT pontos
+            FROM resultado_rodada
+            WHERE rodada_id = %s
+              AND time_id = %s
+            """,
+            (rodada_id, time_b_id),
+        )
+
+        pontos_b = cursor.fetchone()
+
+        if not pontos_b:
+            raise RuntimeError(
+                f"Pontuação não encontrada para o time {time_b_id}."
+            )
+
+        cursor.execute(
+            """
+            INSERT INTO competicao_confronto_jogos (
+                confronto_id,
+                rodada_id,
+                ordem,
+                pontuacao_a,
+                pontuacao_b,
+                processado_em
+            )
+            VALUES (%s, %s, 1, %s, %s, CURRENT_TIMESTAMP)
+            ON CONFLICT (confronto_id, ordem)
+            DO UPDATE SET
+                rodada_id = EXCLUDED.rodada_id,
+                pontuacao_a = EXCLUDED.pontuacao_a,
+                pontuacao_b = EXCLUDED.pontuacao_b,
+                processado_em = CURRENT_TIMESTAMP
+            """,
+            (
+                confronto_id,
+                rodada_id,
+                pontos_a[0],
+                pontos_b[0],
+            ),
+        )
+
+    # Marca todos os confrontos como em andamento
+    cursor.execute(
+        """
+        UPDATE competicao_confrontos
+        SET status = 'em_andamento'
+        WHERE competicao_id = %s
+          AND fase_id = %s
+        """,
+        (competicao_id, fase_id),
+    )
+
+    print("[Champions] Ida da repescagem processada.")

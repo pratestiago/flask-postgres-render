@@ -995,32 +995,46 @@ def champions():
         # CONFRONTOS DA REPESCAGEM
         # =========================
         cursor.execute("""
-            SELECT
-                cc.ordem_na_fase,
-                cc.ranking_a,
-                ta.nome_time AS time_a,
-                ca.nome AS cartoleiro_a,
-                cc.pontuacao_a,
-                cc.ranking_b,
-                tb.nome_time AS time_b,
-                cb.nome AS cartoleiro_b,
-                cc.pontuacao_b,
-                cc.status,
-                cf.rodada
-            FROM competicao_confrontos cc
-            JOIN competicao_fases cf
-                ON cf.id = cc.fase_id
-            LEFT JOIN times ta
-                ON ta.id = cc.time_a_id
-            LEFT JOIN cartoleiros ca
-                ON ca.id = ta.cartoleiro_id
-            LEFT JOIN times tb
-                ON tb.id = cc.time_b_id
-            LEFT JOIN cartoleiros cb
-                ON cb.id = tb.cartoleiro_id
-            WHERE cc.competicao_id = %s
-              AND LOWER(cf.nome_fase) = 'repescagem'
-            ORDER BY cc.ordem_na_fase
+         SELECT
+            cc.ordem_na_fase,
+            cc.ranking_a,
+            ta.nome_time AS time_a,
+            ca.nome AS cartoleiro_a,
+            cj.pontuacao_a,
+
+            cc.ranking_b,
+            tb.nome_time AS time_b,
+            cb.nome AS cartoleiro_b,
+            cj.pontuacao_b,
+
+            cc.status,
+            cf.rodada
+
+        FROM competicao_confrontos cc
+
+        JOIN competicao_fases cf
+            ON cf.id = cc.fase_id
+
+        LEFT JOIN times ta
+            ON ta.id = cc.time_a_id
+
+        LEFT JOIN cartoleiros ca
+            ON ca.id = ta.cartoleiro_id
+
+        LEFT JOIN times tb
+            ON tb.id = cc.time_b_id
+
+        LEFT JOIN cartoleiros cb
+            ON cb.id = tb.cartoleiro_id
+
+        LEFT JOIN competicao_confronto_jogos cj
+            ON cj.confronto_id = cc.id
+           AND cj.ordem = 1
+
+        WHERE cc.competicao_id = %s
+          AND LOWER(cf.nome_fase) = 'repescagem'
+
+        ORDER BY cc.ordem_na_fase
         """, (competicao_id,))
 
         repescagem_db = cursor.fetchall()
