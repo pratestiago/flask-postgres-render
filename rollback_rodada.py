@@ -155,11 +155,60 @@ def rollback_rodada(ano, rodada):
                 WHERE ano = %s
             """, (ano,))
             
-            
         # =========================
         # 5. AJUSTAR CHAMPIONS
         # =========================
         print("🧹 Ajustando Champions...")
+
+        # Voltou para antes da volta da repescagem.
+        # Mantém o jogo de ida, mas remove o agregado,
+        # vencedor e perdedor definidos na rodada 22.
+        if rodada_limite < 22:
+            cursor.execute("""
+                UPDATE competicao_confrontos
+                SET status = 'em_andamento',
+                    pontuacao_a = NULL,
+                    pontuacao_b = NULL,
+                    vencedor_id = NULL,
+                    perdedor_id = NULL
+                WHERE competicao_id IN (
+                    SELECT id
+                    FROM competicoes
+                    WHERE tipo = 'champions'
+                      AND ano = %s
+                )
+                  AND fase_id IN (
+                    SELECT cf.id
+                    FROM competicao_fases cf
+                    JOIN competicoes c
+                      ON c.id = cf.competicao_id
+                    WHERE c.tipo = 'champions'
+                      AND c.ano = %s
+                      AND LOWER(cf.nome_fase) = 'repescagem'
+                )
+            """, (ano, ano))
+            
+            cursor.execute("""
+                DELETE FROM champions_grupo_jogos
+                WHERE competicao_id IN (
+                    SELECT id
+                    FROM competicoes
+                    WHERE tipo = 'champions'
+                    AND ano = %s
+                )
+            """, (ano,))
+
+            cursor.execute("""
+                DELETE FROM champions_grupos
+                WHERE competicao_id IN (
+                    SELECT id
+                    FROM competicoes
+                    WHERE tipo = 'champions'
+                      AND ano = %s
+                )
+            """, (ano,))
+
+            print("🧹 Volta, agregado e grupos da Champions removidos.")
 
         # Voltou para antes da ida da repescagem.
         # Mantém os confrontos, mas restaura o estado inicial.
@@ -187,12 +236,9 @@ def rollback_rodada(ano, rodada):
                       AND LOWER(cf.nome_fase) = 'repescagem'
                 )
             """, (ano, ano))
-        
-        
+
         # Voltou para antes da classificação inicial.
         # Remove confrontos e participantes da Champions.
-        
-        
         if rodada_limite < 20:
             cursor.execute("""
                 DELETE FROM competicao_confrontos

@@ -3,7 +3,7 @@
 
 def processar_champions(conn, ano, rodada):
 
-    if rodada not in (20, 21):
+    if rodada not in (20, 21, 22):
         return
 
     cursor = conn.cursor()
@@ -43,6 +43,22 @@ def processar_champions(conn, ano, rodada):
                 cursor,
                 ano
             )
+        elif rodada == 22:
+
+            processar_volta_repescagem(
+                cursor,
+                ano
+            )
+
+            criar_grupos_champions(
+                cursor,
+                ano
+            )
+
+            criar_jogos_grupos_champions(
+                cursor,
+                ano
+            )   
 
     finally:
         cursor.close()
@@ -435,3 +451,610 @@ def processar_ida_repescagem(cursor, ano):
     )
 
     print("[Champions] Ida da repescagem processada.")
+    
+    
+def processar_volta_repescagem(cursor, ano):
+    """
+    Processa a volta da repescagem da Champions.
+
+    Regras:
+    - ida = rodada 21, ordem 1;
+    - volta = rodada 22, ordem 2;
+    - vencedor definido pela soma dos dois jogos;
+    - em caso de empate, vence o melhor ranking da rodada 20.
+    """
+
+    print("[Champions] Processando volta da repescagem...")
+
+    # =========================
+    # LOCALIZAR COMPETIÇÃO E FASE
+    # =========================
+    cursor.execute(
+        """
+        SELECT
+            c.id,
+            cf.id
+        FROM competicoes c
+        JOIN competicao_fases cf
+            ON cf.competicao_id = c.id
+        WHERE c.tipo = 'champions'
+          AND c.ano = %s
+          AND LOWER(cf.nome_fase) = 'repescagem'
+        LIMIT 1
+        """,
+        (ano,),
+    )
+
+    dados = cursor.fetchone()
+
+    if not dados:
+        raise RuntimeError(
+            f"Repescagem da Champions {ano} não encontrada."
+        )
+
+    competicao_id, fase_id = dados
+
+    # =========================
+    # LOCALIZAR RODADA 22
+    # =========================
+    cursor.execute(
+        """
+        SELECT id
+        FROM rodadas
+        WHERE ano = %s
+          AND numero = 22
+        """,
+        (ano,),
+    )
+
+    rodada = cursor.fetchone()
+
+    if not rodada:
+        raise RuntimeError(
+            f"Rodada 22 do ano {ano} não encontrada."
+        )
+
+    rodada_id = rodada[0]
+
+    # =========================
+    # BUSCAR CONFRONTOS
+    # =========================
+    cursor.execute(
+        """
+        SELECT
+            id,
+            time_a_id,
+            time_b_id,
+            ranking_a,
+            ranking_b
+        FROM competicao_confrontos
+        WHERE competicao_id = %s
+          AND fase_id = %s
+        ORDER BY ordem_na_fase
+        """,
+        (competicao_id, fase_id),
+    )
+
+    confrontos = cursor.fetchall()
+
+    if len(confrontos) != 19:
+        raise RuntimeError(
+            f"Esperados 19 confrontos, encontrados {len(confrontos)}."
+        )
+
+    # =========================
+    # PROCESSAR CADA CONFRONTO
+    # =========================
+    for (
+        confronto_id,
+        time_a_id,
+        time_b_id,
+        ranking_a,
+        ranking_b
+    ) in confrontos:
+
+        # Pontuação do time A na rodada 22
+        cursor.execute(
+            """
+            SELECT pontos
+            FROM resultado_rodada
+            WHERE rodada_id = %s
+              AND time_id = %s
+            """,
+            (rodada_id, time_a_id),
+        )
+
+        resultado_a = cursor.fetchone()
+
+        if not resultado_a:
+            raise RuntimeError(
+                f"Pontuação da rodada 22 não encontrada "
+                f"para o time {time_a_id}."
+            )
+
+        pontos_volta_a = resultado_a[0]
+
+        # Pontuação do time B na rodada 22
+        cursor.execute(
+            """
+            SELECT pontos
+            FROM resultado_rodada
+            WHERE rodada_id = %s
+              AND time_id = %s
+            """,
+            (rodada_id, time_b_id),
+        )
+
+        resultado_b = cursor.fetchone()
+
+        if not resultado_b:
+            raise RuntimeError(
+                f"Pontuação da rodada 22 não encontrada "
+                f"para o time {time_b_id}."
+            )
+
+        pontos_volta_b = resultado_b[0]
+
+        # =========================
+        # GRAVAR JOGO DA VOLTA
+        # =========================
+        cursor.execute(
+            """
+            INSERT INTO competicao_confronto_jogos (
+                confronto_id,
+                rodada_id,
+                ordem,
+                pontuacao_a,
+                pontuacao_b,
+                processado_em
+            )
+            VALUES (%s, %s, 2, %s, %s, CURRENT_TIMESTAMP)
+            ON CONFLICT (confronto_id, ordem)
+            DO UPDATE SET
+                rodada_id = EXCLUDED.rodada_id,
+                pontuacao_a = EXCLUDED.pontuacao_a,
+                pontuacao_b = EXCLUDED.pontuacao_b,
+                processado_em = CURRENT_TIMESTAMP
+            """,
+            (
+                confronto_id,
+                rodada_id,
+                pontos_volta_a,
+                pontos_volta_b,
+            ),
+        )
+
+        # =========================
+        # BUSCAR JOGO DA IDA
+        # =========================
+        cursor.execute(
+            """
+            SELECT
+                pontuacao_a,
+                pontuacao_b
+            FROM competicao_confronto_jogos
+            WHERE confronto_id = %s
+              AND ordem = 1
+            """,
+            (confronto_id,),
+        )
+
+        jogo_ida = cursor.fetchone()
+
+        if not jogo_ida:
+            raise RuntimeError(
+                f"Jogo de ida não encontrado para o confronto "
+                f"{confronto_id}."
+            )
+
+        pontos_ida_a, pontos_ida_b = jogo_ida
+
+        # =========================
+        # CALCULAR PLACAR AGREGADO
+        # =========================
+        total_a = pontos_ida_a + pontos_volta_a
+        total_b = pontos_ida_b + pontos_volta_b
+
+        # =========================
+        # DEFINIR VENCEDOR
+        # =========================
+        if total_a > total_b:
+            vencedor_id = time_a_id
+            perdedor_id = time_b_id
+
+        elif total_b > total_a:
+            vencedor_id = time_b_id
+            perdedor_id = time_a_id
+
+        else:
+            # Melhor posição na rodada 20.
+            # Ranking menor significa posição melhor.
+            if ranking_a < ranking_b:
+                vencedor_id = time_a_id
+                perdedor_id = time_b_id
+            else:
+                vencedor_id = time_b_id
+                perdedor_id = time_a_id
+
+        # =========================
+        # FINALIZAR CONFRONTO
+        # =========================
+        cursor.execute(
+            """
+            UPDATE competicao_confrontos
+            SET pontuacao_a = %s,
+                pontuacao_b = %s,
+                vencedor_id = %s,
+                perdedor_id = %s,
+                status = 'finalizado'
+            WHERE id = %s
+            """,
+            (
+                total_a,
+                total_b,
+                vencedor_id,
+                perdedor_id,
+                confronto_id,
+            ),
+        )
+
+    print(
+        "[Champions] 19 jogos da volta processados "
+        "e classificados definidos."
+    )    
+    
+def criar_grupos_champions(cursor, ano):
+    """
+    Cria os 16 grupos da Champions após o fim da repescagem.
+
+    Regra:
+    - 45 classificados diretamente pela rodada 20;
+    - 19 vencedores da repescagem;
+    - grupos A até P;
+    - distribuição seguindo o ranking inicial da rodada 20.
+    """
+
+    print("[Champions] Criando fase de grupos...")
+
+    # =========================
+    # LOCALIZAR COMPETIÇÃO
+    # =========================
+    cursor.execute(
+        """
+        SELECT id
+        FROM competicoes
+        WHERE tipo = 'champions'
+          AND ano = %s
+        LIMIT 1
+        """,
+        (ano,),
+    )
+
+    competicao = cursor.fetchone()
+
+    if not competicao:
+        raise RuntimeError(
+            f"Champions {ano} não encontrada."
+        )
+
+    competicao_id = competicao[0]
+
+    # =========================
+    # EVITAR DUPLICAÇÃO
+    # =========================
+    cursor.execute(
+        """
+        SELECT COUNT(*)
+        FROM champions_grupos
+        WHERE competicao_id = %s
+        """,
+        (competicao_id,),
+    )
+
+    total_existente = cursor.fetchone()[0]
+
+    if total_existente > 0:
+        print(
+            f"[Champions] Grupos já possuem "
+            f"{total_existente} times cadastrados."
+        )
+        return
+
+    # =========================
+    # BUSCAR 45 DIRETOS
+    # =========================
+    cursor.execute(
+        """
+        SELECT
+            time_id,
+            ranking_inicial
+        FROM competicao_times
+        WHERE competicao_id = %s
+          AND status = 'direto'
+        ORDER BY ranking_inicial
+        """,
+        (competicao_id,),
+    )
+
+    diretos = cursor.fetchall()
+
+    if len(diretos) != 45:
+        raise RuntimeError(
+            f"Esperados 45 classificados diretos, "
+            f"encontrados {len(diretos)}."
+        )
+
+    # =========================
+    # BUSCAR 19 VENCEDORES
+    # =========================
+    cursor.execute(
+        """
+        SELECT
+            cc.vencedor_id,
+            ct.ranking_inicial
+        FROM competicao_confrontos cc
+        JOIN competicao_fases cf
+            ON cf.id = cc.fase_id
+        JOIN competicao_times ct
+            ON ct.competicao_id = cc.competicao_id
+           AND ct.time_id = cc.vencedor_id
+        WHERE cc.competicao_id = %s
+          AND LOWER(cf.nome_fase) = 'repescagem'
+          AND cc.status = 'finalizado'
+          AND cc.vencedor_id IS NOT NULL
+        ORDER BY cc.ordem_na_fase
+        """,
+        (competicao_id,),
+    )
+
+    vencedores = cursor.fetchall()
+
+    if len(vencedores) != 19:
+        raise RuntimeError(
+            f"Esperados 19 vencedores da repescagem, "
+            f"encontrados {len(vencedores)}."
+        )
+
+    letras = [
+        chr(codigo)
+        for codigo in range(ord("A"), ord("P") + 1)
+    ]
+
+    # =========================
+    # DISTRIBUIR OS DIRETOS
+    # =========================
+    for indice, (time_id, ranking_inicial) in enumerate(diretos):
+
+        grupo = letras[indice % 16]
+
+        cursor.execute(
+            """
+            INSERT INTO champions_grupos (
+                competicao_id,
+                ano,
+                grupo,
+                time_id,
+                origem,
+                ranking_inicial
+            )
+            VALUES (%s, %s, %s, %s, 'direto', %s)
+            """,
+            (
+                competicao_id,
+                ano,
+                grupo,
+                time_id,
+                ranking_inicial,
+            ),
+        )
+
+    # =========================
+    # DISTRIBUIR VENCEDORES
+    # =========================
+    #
+    # Os 45 diretos deixam:
+    #
+    # A-M = 3 times
+    # N-P = 2 times
+    #
+    # Portanto começamos a repescagem no grupo N,
+    # exatamente como fizemos na Copa do Mundo.
+    #
+    inicio = letras.index("N")
+
+    for indice, (time_id, ranking_inicial) in enumerate(vencedores):
+
+        grupo = letras[(inicio + indice) % 16]
+
+        cursor.execute(
+            """
+            INSERT INTO champions_grupos (
+                competicao_id,
+                ano,
+                grupo,
+                time_id,
+                origem,
+                ranking_inicial
+            )
+            VALUES (%s, %s, %s, %s, 'repescagem', %s)
+            """,
+            (
+                competicao_id,
+                ano,
+                grupo,
+                time_id,
+                ranking_inicial,
+            ),
+        )
+
+    # =========================
+    # VALIDAR RESULTADO
+    # =========================
+    cursor.execute(
+        """
+        SELECT
+            grupo,
+            COUNT(*)
+        FROM champions_grupos
+        WHERE competicao_id = %s
+        GROUP BY grupo
+        ORDER BY grupo
+        """,
+        (competicao_id,),
+    )
+
+    grupos = cursor.fetchall()
+
+    if len(grupos) != 16:
+        raise RuntimeError(
+            f"Esperados 16 grupos, encontrados {len(grupos)}."
+        )
+
+    for grupo, total in grupos:
+        if total != 4:
+            raise RuntimeError(
+                f"Grupo {grupo} ficou com {total} times "
+                "em vez de 4."
+            )
+
+    print(
+        "[Champions] 16 grupos criados com "
+        "4 times cada."
+    )    
+
+def criar_jogos_grupos_champions(cursor, ano):
+    """
+    Cria antecipadamente os jogos das rodadas 23 a 28.
+
+    Cada grupo possui:
+    - 4 times
+    - 6 confrontos diferentes
+    - ida e volta
+    - 12 jogos no total
+    """
+
+    print("[Champions] Criando jogos da fase de grupos...")
+
+    # Localizar competição
+    cursor.execute("""
+        SELECT id
+        FROM competicoes
+        WHERE tipo = 'champions'
+          AND ano = %s
+        LIMIT 1
+    """, (ano,))
+
+    competicao = cursor.fetchone()
+
+    if not competicao:
+        raise RuntimeError(
+            f"Champions {ano} não encontrada."
+        )
+
+    competicao_id = competicao[0]
+
+    # Evitar duplicação
+    cursor.execute("""
+        SELECT COUNT(*)
+        FROM champions_grupo_jogos
+        WHERE competicao_id = %s
+    """, (competicao_id,))
+
+    total_existente = cursor.fetchone()[0]
+
+    if total_existente > 0:
+        print(
+            f"[Champions] Jogos dos grupos já existem "
+            f"({total_existente} registros)."
+        )
+        return
+
+    # Buscar os grupos
+    cursor.execute("""
+        SELECT
+            grupo,
+            time_id,
+            ranking_inicial
+        FROM champions_grupos
+        WHERE competicao_id = %s
+        ORDER BY grupo, ranking_inicial
+    """, (competicao_id,))
+
+    dados = cursor.fetchall()
+
+    grupos = {}
+
+    for grupo, time_id, ranking in dados:
+        grupos.setdefault(grupo, []).append(time_id)
+
+    if len(grupos) != 16:
+        raise RuntimeError(
+            f"Esperados 16 grupos, encontrados {len(grupos)}."
+        )
+
+    for grupo, times in grupos.items():
+
+        if len(times) != 4:
+            raise RuntimeError(
+                f"Grupo {grupo} possui {len(times)} times."
+            )
+
+        a, b, c, d = times
+
+        jogos = [
+            # IDA
+            (23, 1, a, b),
+            (23, 2, c, d),
+
+            (24, 1, a, c),
+            (24, 2, b, d),
+
+            (25, 1, a, d),
+            (25, 2, b, c),
+
+            # VOLTA
+            (26, 1, b, a),
+            (26, 2, d, c),
+
+            (27, 1, c, a),
+            (27, 2, d, b),
+
+            (28, 1, d, a),
+            (28, 2, c, b),
+        ]
+
+        for rodada, ordem, time_a, time_b in jogos:
+
+            cursor.execute("""
+                INSERT INTO champions_grupo_jogos (
+                    competicao_id,
+                    ano,
+                    grupo,
+                    rodada,
+                    ordem_na_rodada,
+                    time_a_id,
+                    time_b_id,
+                    pontuacao_a,
+                    pontuacao_b,
+                    status
+                )
+                VALUES (
+                    %s, %s, %s, %s, %s,
+                    %s, %s,
+                    NULL, NULL,
+                    'criado'
+                )
+            """, (
+                competicao_id,
+                ano,
+                grupo,
+                rodada,
+                ordem,
+                time_a,
+                time_b
+            ))
+
+    print(
+        "[Champions] 192 jogos da fase de grupos criados "
+        "(16 grupos x 12 jogos)."
+    )    

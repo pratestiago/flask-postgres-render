@@ -944,6 +944,10 @@ def copamundo():
 # CHAMPIONS
 # =========================
 
+# =========================
+# CHAMPIONS
+# =========================
+
 @app.route("/champions")
 def champions():
 
@@ -953,6 +957,7 @@ def champions():
     cursor = conn.cursor()
 
     try:
+
         # =========================
         # BUSCAR COMPETIÇÃO
         # =========================
@@ -970,6 +975,7 @@ def champions():
             abort(404)
 
         competicao_id, competicao_nome = competicao
+
 
         # =========================
         # CLASSIFICADOS DIRETAMENTE
@@ -991,69 +997,93 @@ def champions():
 
         classificados_diretos = cursor.fetchall()
 
+
         # =========================
-        # CONFRONTOS DA REPESCAGEM
+        # REPESCAGEM
         # =========================
         cursor.execute("""
-         SELECT
-            cc.ordem_na_fase,
-            cc.ranking_a,
-            ta.nome_time AS time_a,
-            ca.nome AS cartoleiro_a,
-            cj.pontuacao_a,
+            SELECT
+                cc.ordem_na_fase,
 
-            cc.ranking_b,
-            tb.nome_time AS time_b,
-            cb.nome AS cartoleiro_b,
-            cj.pontuacao_b,
+                cc.ranking_a,
+                ta.nome_time AS time_a,
+                ca.nome AS cartoleiro_a,
 
-            cc.status,
-            cf.rodada
+                ida.pontuacao_a AS ida_a,
+                volta.pontuacao_a AS volta_a,
+                cc.pontuacao_a AS total_a,
 
-        FROM competicao_confrontos cc
+                cc.ranking_b,
+                tb.nome_time AS time_b,
+                cb.nome AS cartoleiro_b,
 
-        JOIN competicao_fases cf
-            ON cf.id = cc.fase_id
+                ida.pontuacao_b AS ida_b,
+                volta.pontuacao_b AS volta_b,
+                cc.pontuacao_b AS total_b,
 
-        LEFT JOIN times ta
-            ON ta.id = cc.time_a_id
+                cc.vencedor_id,
+                cc.time_a_id,
+                cc.time_b_id,
+                cc.status,
+                cf.rodada
 
-        LEFT JOIN cartoleiros ca
-            ON ca.id = ta.cartoleiro_id
+            FROM competicao_confrontos cc
 
-        LEFT JOIN times tb
-            ON tb.id = cc.time_b_id
+            JOIN competicao_fases cf
+                ON cf.id = cc.fase_id
 
-        LEFT JOIN cartoleiros cb
-            ON cb.id = tb.cartoleiro_id
+            LEFT JOIN times ta
+                ON ta.id = cc.time_a_id
 
-        LEFT JOIN competicao_confronto_jogos cj
-            ON cj.confronto_id = cc.id
-           AND cj.ordem = 1
+            LEFT JOIN cartoleiros ca
+                ON ca.id = ta.cartoleiro_id
 
-        WHERE cc.competicao_id = %s
-          AND LOWER(cf.nome_fase) = 'repescagem'
+            LEFT JOIN times tb
+                ON tb.id = cc.time_b_id
 
-        ORDER BY cc.ordem_na_fase
+            LEFT JOIN cartoleiros cb
+                ON cb.id = tb.cartoleiro_id
+
+            LEFT JOIN competicao_confronto_jogos ida
+                ON ida.confronto_id = cc.id
+               AND ida.ordem = 1
+
+            LEFT JOIN competicao_confronto_jogos volta
+                ON volta.confronto_id = cc.id
+               AND volta.ordem = 2
+
+            WHERE cc.competicao_id = %s
+              AND LOWER(cf.nome_fase) = 'repescagem'
+
+            ORDER BY cc.ordem_na_fase
         """, (competicao_id,))
 
         repescagem_db = cursor.fetchall()
 
-        # =========================
-        # ORGANIZAR REPESCAGEM
-        # =========================
         repescagem = []
 
         for (
             ordem,
+
             ranking_a,
             time_a,
             cartoleiro_a,
-            pontuacao_a,
+
+            ida_a,
+            volta_a,
+            total_a,
+
             ranking_b,
             time_b,
             cartoleiro_b,
-            pontuacao_b,
+
+            ida_b,
+            volta_b,
+            total_b,
+
+            vencedor_id,
+            time_a_id,
+            time_b_id,
             status,
             rodada
         ) in repescagem_db:
@@ -1064,28 +1094,149 @@ def champions():
                 "ranking_a": ranking_a,
                 "time_a": time_a,
                 "cartoleiro_a": cartoleiro_a,
-                "pontuacao_a": pontuacao_a,
+                "ida_a": ida_a,
+                "volta_a": volta_a,
+                "total_a": total_a,
+                "vencedor_a": vencedor_id == time_a_id,
 
                 "ranking_b": ranking_b,
                 "time_b": time_b,
                 "cartoleiro_b": cartoleiro_b,
-                "pontuacao_b": pontuacao_b,
+                "ida_b": ida_b,
+                "volta_b": volta_b,
+                "total_b": total_b,
+                "vencedor_b": vencedor_id == time_b_id,
 
                 "status": status,
                 "rodada": rodada
             })
 
+
+        # =========================
+        # FASE DE GRUPOS
+        # =========================
+        cursor.execute("""
+            SELECT
+                cg.grupo,
+                cg.ranking_inicial,
+                t.nome_time,
+                c.nome AS cartoleiro,
+                cg.origem
+            FROM champions_grupos cg
+            JOIN times t
+                ON t.id = cg.time_id
+            LEFT JOIN cartoleiros c
+                ON c.id = t.cartoleiro_id
+            WHERE cg.competicao_id = %s
+            ORDER BY
+                cg.grupo,
+                cg.ranking_inicial
+        """, (competicao_id,))
+
+        grupos_db = cursor.fetchall()
+
+        grupos = {}
+
+        for grupo, ranking, time, cartoleiro, origem in grupos_db:
+
+            grupos.setdefault(grupo, []).append({
+                "ranking": ranking,
+                "time": time,
+                "cartoleiro": cartoleiro,
+                "origem": origem
+            })
+
+
+        # =========================
+        # JOGOS DOS GRUPOS
+        # =========================
+        cursor.execute("""
+            SELECT
+                j.grupo,
+                j.rodada,
+                j.ordem_na_rodada,
+
+                ta.nome_time AS time_a,
+                ca.nome AS cartoleiro_a,
+                j.pontuacao_a,
+
+                tb.nome_time AS time_b,
+                cb.nome AS cartoleiro_b,
+                j.pontuacao_b,
+
+                j.status
+
+            FROM champions_grupo_jogos j
+
+            JOIN times ta
+                ON ta.id = j.time_a_id
+
+            LEFT JOIN cartoleiros ca
+                ON ca.id = ta.cartoleiro_id
+
+            JOIN times tb
+                ON tb.id = j.time_b_id
+
+            LEFT JOIN cartoleiros cb
+                ON cb.id = tb.cartoleiro_id
+
+            WHERE j.competicao_id = %s
+
+            ORDER BY
+                j.grupo,
+                j.rodada,
+                j.ordem_na_rodada
+        """, (competicao_id,))
+
+        jogos_db = cursor.fetchall()
+
+        jogos_grupos = {}
+
+        for (
+            grupo,
+            rodada_jogo,
+            ordem_jogo,
+            time_a,
+            cartoleiro_a,
+            pontuacao_a,
+            time_b,
+            cartoleiro_b,
+            pontuacao_b,
+            status
+        ) in jogos_db:
+
+            jogos_grupos.setdefault(grupo, []).append({
+                "rodada": rodada_jogo,
+                "ordem": ordem_jogo,
+
+                "time_a": time_a,
+                "cartoleiro_a": cartoleiro_a,
+                "pontuacao_a": pontuacao_a,
+
+                "time_b": time_b,
+                "cartoleiro_b": cartoleiro_b,
+                "pontuacao_b": pontuacao_b,
+
+                "status": status
+            })
+
+
     finally:
         cursor.close()
         conn.close()
+
 
     return render_template(
         "champions.html",
         ano=ano,
         competicao_nome=competicao_nome,
         classificados_diretos=classificados_diretos,
-        repescagem=repescagem
-    )    
+        repescagem=repescagem,
+        grupos=grupos,
+        jogos_grupos=jogos_grupos
+    )
+    
+    
     
 @app.route("/resultados/duplas")
 def duplas():
@@ -1639,7 +1790,7 @@ def resultados_duplas_champions():
             rodada_real = 0
 
         # Temporário, apenas para testar a Champions no front
-        rodada_atual = 20
+        rodada_atual = rodada_real
 
         resultado = processar_champions_duplas(
             conn,
@@ -1652,9 +1803,9 @@ def resultados_duplas_champions():
             resultado=resultado,
             ranking=resultado["ranking"],
             grupos=resultado["grupos"],
+            fase_grupos=resultado["fase_grupos"],
             ano=ano,
-            rodada_atual=rodada_atual,
-            rodada_real=rodada_real
+            rodada_atual=rodada_atual
         )
 
     finally:

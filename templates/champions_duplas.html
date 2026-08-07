@@ -4,7 +4,7 @@
 
 <div class="container mt-4">
 
-    <h1>Champions de Duplas</h1>
+    <h1>🏆 Champions de Duplas</h1>
 
     <p>
         Ano {{ ano }} — situação até a rodada {{ rodada_atual }}
@@ -25,14 +25,18 @@
         </thead>
 
         <tbody>
+
             {% for dupla in ranking %}
+
                 <tr>
                     <td>{{ dupla.posicao }}º</td>
                     <td>{{ dupla.nome }}</td>
                     <td>{{ dupla.times }}</td>
                     <td>{{ "%.2f"|format(dupla.pontos) }}</td>
                 </tr>
+
             {% endfor %}
+
         </tbody>
     </table>
 
@@ -84,6 +88,86 @@
         {% endfor %}
 
     </div>
+
+    {% if fase_grupos %}
+
+        <hr>
+
+        <h2>Fase de Grupos</h2>
+
+        {% for grupo, confrontos in fase_grupos.items() %}
+
+            <div class="card mb-4">
+
+                <div class="card-header">
+
+                    <strong>Grupo {{ grupo }}</strong>
+
+                </div>
+
+                <div class="card-body">
+
+                    {% for confronto in confrontos %}
+
+                        <div class="mb-3">
+
+                            <strong>
+                                {{ confronto.dupla_a.nome }}
+                            </strong>
+
+                            {% if confronto.pontos_a is not none %}
+                                ({{ "%.2f"|format(confronto.pontos_a) }})
+                            {% else %}
+                                (aguardando)
+                            {% endif %}
+
+                            &nbsp;
+
+                            <strong>×</strong>
+
+                            &nbsp;
+
+                            <strong>
+                                {{ confronto.dupla_b.nome }}
+                            </strong>
+
+                            {% if confronto.pontos_b is not none %}
+                                ({{ "%.2f"|format(confronto.pontos_b) }})
+                            {% else %}
+                                (aguardando)
+                            {% endif %}
+
+                            {% if confronto.resultado_tabela %}
+
+                                <br>
+
+                                <small>
+
+                                    Resultado da tabela:
+
+                                    <strong>
+                                        {{ confronto.resultado_tabela }}
+                                    </strong>
+
+                                </small>
+
+                            {% endif %}
+
+                        </div>
+
+                        {% if not loop.last %}
+                            <hr>
+                        {% endif %}
+
+                    {% endfor %}
+
+                </div>
+
+            </div>
+
+        {% endfor %}
+
+    {% endif %}
 
 </div>
 

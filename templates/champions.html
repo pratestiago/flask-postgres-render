@@ -11,7 +11,9 @@
 
 <div class="dashboard">
 
+    <!-- ========================= -->
     <!-- CLASSIFICADOS DIRETAMENTE -->
+    <!-- ========================= -->
     <div class="card">
 
         <div class="card-header">
@@ -39,7 +41,9 @@
 
                             <tr>
                                 <td>{{ ranking }}</td>
-                                <td>{{ time }}</td>
+                                <td>
+                                    <strong>{{ time }}</strong>
+                                </td>
                                 <td>{{ cartoleiro }}</td>
                             </tr>
 
@@ -60,15 +64,19 @@
     </div>
 
 
+    <!-- ========================= -->
     <!-- REPESCAGEM -->
+    <!-- ========================= -->
     <div class="card">
 
         <div class="card-header">
+
             <h2>⚔️ Repescagem</h2>
 
             {% if repescagem %}
-                <span>Rodada {{ repescagem[0].rodada }}</span>
+                <span>Rodadas 21 e 22</span>
             {% endif %}
+
         </div>
 
         <div class="card-body">
@@ -78,15 +86,21 @@
                 <table class="tabela">
 
                     <thead>
+
                         <tr>
                             <th>Ranking</th>
                             <th>Time A</th>
-                            <th>Pts</th>
+                            <th>Ida</th>
+                            <th>Volta</th>
+                            <th>Total</th>
                             <th></th>
-                            <th>Pts</th>
+                            <th>Total</th>
+                            <th>Volta</th>
+                            <th>Ida</th>
                             <th>Time B</th>
                             <th>Ranking</th>
                         </tr>
+
                     </thead>
 
                     <tbody>
@@ -95,14 +109,28 @@
 
                             <tr>
 
+                                <!-- RANKING A -->
                                 <td>
                                     {{ confronto.ranking_a or "—" }}
                                 </td>
 
+
+                                <!-- TIME A -->
                                 <td>
-                                    <strong>
-                                        {{ confronto.time_a or "A definir" }}
-                                    </strong>
+
+                                    {% if confronto.vencedor_a %}
+
+                                        <strong>
+                                            ✅ {{ confronto.time_a or "A definir" }}
+                                        </strong>
+
+                                    {% else %}
+
+                                        <strong>
+                                            {{ confronto.time_a or "A definir" }}
+                                        </strong>
+
+                                    {% endif %}
 
                                     {% if confronto.cartoleiro_a %}
                                         <br>
@@ -110,32 +138,131 @@
                                             {{ confronto.cartoleiro_a }}
                                         </small>
                                     {% endif %}
+
                                 </td>
 
+
+                                <!-- IDA A -->
                                 <td>
-                                    {% if confronto.pontuacao_a is not none %}
-                                        {{ "%.2f"|format(confronto.pontuacao_a) }}
+
+                                    {% if confronto.ida_a is not none %}
+
+                                        {{ "%.2f"|format(confronto.ida_a) }}
+
                                     {% else %}
+
                                         -
+
                                     {% endif %}
+
                                 </td>
+
+
+                                <!-- VOLTA A -->
+                                <td>
+
+                                    {% if confronto.volta_a is not none %}
+
+                                        {{ "%.2f"|format(confronto.volta_a) }}
+
+                                    {% else %}
+
+                                        -
+
+                                    {% endif %}
+
+                                </td>
+
+
+                                <!-- TOTAL A -->
+                                <td>
+
+                                    {% if confronto.total_a is not none %}
+
+                                        <strong>
+                                            {{ "%.2f"|format(confronto.total_a) }}
+                                        </strong>
+
+                                    {% else %}
+
+                                        -
+
+                                    {% endif %}
+
+                                </td>
+
 
                                 <td>
                                     x
                                 </td>
 
+
+                                <!-- TOTAL B -->
                                 <td>
-                                    {% if confronto.pontuacao_b is not none %}
-                                        {{ "%.2f"|format(confronto.pontuacao_b) }}
+
+                                    {% if confronto.total_b is not none %}
+
+                                        <strong>
+                                            {{ "%.2f"|format(confronto.total_b) }}
+                                        </strong>
+
                                     {% else %}
+
                                         -
+
                                     {% endif %}
+
                                 </td>
 
+
+                                <!-- VOLTA B -->
                                 <td>
-                                    <strong>
-                                        {{ confronto.time_b or "A definir" }}
-                                    </strong>
+
+                                    {% if confronto.volta_b is not none %}
+
+                                        {{ "%.2f"|format(confronto.volta_b) }}
+
+                                    {% else %}
+
+                                        -
+
+                                    {% endif %}
+
+                                </td>
+
+
+                                <!-- IDA B -->
+                                <td>
+
+                                    {% if confronto.ida_b is not none %}
+
+                                        {{ "%.2f"|format(confronto.ida_b) }}
+
+                                    {% else %}
+
+                                        -
+
+                                    {% endif %}
+
+                                </td>
+
+
+                                <!-- TIME B -->
+                                <td>
+
+                                    {% if confronto.vencedor_b %}
+
+                                        <strong>
+                                            ✅ {{ confronto.time_b or "A definir" }}
+                                        </strong>
+
+                                    {% else %}
+
+                                        <strong>
+                                            {{ confronto.time_b or "A definir" }}
+                                        </strong>
+
+                                    {% endif %}
 
                                     {% if confronto.cartoleiro_b %}
                                         <br>
@@ -143,8 +270,11 @@
                                             {{ confronto.cartoleiro_b }}
                                         </small>
                                     {% endif %}
+
                                 </td>
 
+
+                                <!-- RANKING B -->
                                 <td>
                                     {{ confronto.ranking_b or "—" }}
                                 </td>
@@ -160,6 +290,225 @@
             {% else %}
 
                 <p>⏳ Confrontos da repescagem ainda não criados.</p>
+
+            {% endif %}
+
+        </div>
+
+    </div>
+
+
+    <!-- ========================= -->
+    <!-- FASE DE GRUPOS -->
+    <!-- ========================= -->
+    <div class="card">
+
+        <div class="card-header">
+
+            <h2>🏟️ Fase de Grupos</h2>
+
+            {% if grupos %}
+                <span>16 grupos</span>
+            {% endif %}
+
+        </div>
+
+        <div class="card-body">
+
+            {% if grupos %}
+
+                <div class="champions-grupos">
+
+                    {% for grupo, times in grupos.items() %}
+
+                        <div class="champions-grupo-card">
+
+                            <!-- NOME DO GRUPO -->
+                            <h3>
+                                Grupo {{ grupo }}
+                            </h3>
+
+
+                            <!-- TIMES DO GRUPO -->
+                            <table class="tabela">
+
+                                <thead>
+
+                                    <tr>
+                                        <th>Ranking</th>
+                                        <th>Time</th>
+                                        <th>Cartoleiro</th>
+                                        <th>Origem</th>
+                                    </tr>
+
+                                </thead>
+
+                                <tbody>
+
+                                    {% for item in times %}
+
+                                        <tr>
+
+                                            <td>
+                                                {{ item.ranking }}
+                                            </td>
+
+                                            <td>
+                                                <strong>
+                                                    {{ item.time }}
+                                                </strong>
+                                            </td>
+
+                                            <td>
+                                                {{ item.cartoleiro or "—" }}
+                                            </td>
+
+                                            <td>
+
+                                                {% if item.origem == "direto" %}
+
+                                                    ⭐ Direto
+
+                                                {% else %}
+
+                                                    ⚔️ Repescagem
+
+                                                {% endif %}
+
+                                            </td>
+
+                                        </tr>
+
+                                    {% endfor %}
+
+                                </tbody>
+
+                            </table>
+
+
+                            <!-- ========================= -->
+                            <!-- JOGOS DO GRUPO -->
+                            <!-- ========================= -->
+
+                            {% if jogos_grupos.get(grupo) %}
+
+                                <div class="champions-grupo-jogos">
+
+                                    {% set rodada_atual = namespace(valor=None) %}
+
+                                    {% for jogo in jogos_grupos.get(grupo) %}
+
+                                        {% if rodada_atual.valor != jogo.rodada %}
+
+                                            {% if rodada_atual.valor is not none %}
+
+                                                </div>
+
+                                            {% endif %}
+
+                                            <h4>
+                                                Rodada {{ jogo.rodada }}
+                                            </h4>
+
+                                            <div class="champions-rodada-jogos">
+
+                                            {% set rodada_atual.valor = jogo.rodada %}
+
+                                        {% endif %}
+
+
+                                        <div class="champions-jogo">
+
+                                            <!-- TIME A -->
+                                            <div class="champions-time champions-time-a">
+
+                                                <strong>
+                                                    {{ jogo.time_a }}
+                                                </strong>
+
+                                                {% if jogo.cartoleiro_a %}
+
+                                                    <small>
+                                                        {{ jogo.cartoleiro_a }}
+                                                    </small>
+
+                                                {% endif %}
+
+                                            </div>
+
+
+                                            <!-- PLACAR -->
+                                            <div class="champions-placar">
+
+                                                {% if jogo.pontuacao_a is not none %}
+
+                                                    {{ "%.2f"|format(jogo.pontuacao_a) }}
+
+                                                {% else %}
+
+                                                    -
+
+                                                {% endif %}
+
+                                                <span>
+                                                    x
+                                                </span>
+
+                                                {% if jogo.pontuacao_b is not none %}
+
+                                                    {{ "%.2f"|format(jogo.pontuacao_b) }}
+
+                                                {% else %}
+
+                                                    -
+
+                                                {% endif %}
+
+                                            </div>
+
+
+                                            <!-- TIME B -->
+                                            <div class="champions-time champions-time-b">
+
+                                                <strong>
+                                                    {{ jogo.time_b }}
+                                                </strong>
+
+                                                {% if jogo.cartoleiro_b %}
+
+                                                    <small>
+                                                        {{ jogo.cartoleiro_b }}
+                                                    </small>
+
+                                                {% endif %}
+
+                                            </div>
+
+                                        </div>
+
+
+                                    {% endfor %}
+
+
+                                    {% if rodada_atual.valor is not none %}
+
+                                        </div>
+
+                                    {% endif %}
+
+                                </div>
+
+                            {% endif %}
+
+                        </div>
+
+                    {% endfor %}
+
+                </div>
+
+            {% else %}
+
+                <p>⏳ Fase de grupos ainda não definida.</p>
 
             {% endif %}
 
