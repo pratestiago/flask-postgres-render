@@ -42,7 +42,7 @@ def processar_champions_duplas(conn, ano, rodada_atual):
 
         fase_grupos = None
 
-        if 22 <= rodada_atual <= 27:
+        if rodada_atual >= 20:
             fase_grupos = processar_fase_grupos(
                 cursor,
                 ano,
@@ -484,27 +484,46 @@ def processar_fase_grupos(
     cursor,
     ano,
     grupos,
-    rodada
+    rodada_atual
 ):
     """
-    Processa todos os grupos de uma rodada da fase de grupos.
+    Monta toda a fase de grupos das rodadas 22 a 27.
+
+    - Todos os confrontos aparecem no front desde o início.
+    - Rodadas já disputadas recebem pontuação.
+    - Rodadas futuras ficam com status "aguardando".
+    - A classificação acumula somente jogos já realizados.
     """
 
-    pontos_rodada = buscar_pontos_rodada_duplas(
-        cursor,
-        ano,
-        rodada
-    )
+    confrontos = {
+        letra: []
+        for letra in grupos
+    }
 
-    confrontos = {}
+    # Processa o calendário inteiro
+    for rodada in range(22, 28):
 
-    for letra, grupo in grupos.items():
+        # Só busca pontos se a rodada já aconteceu
+        if rodada <= rodada_atual:
+            pontos_rodada = buscar_pontos_rodada_duplas(
+                cursor,
+                ano,
+                rodada
+            )
+        else:
+            pontos_rodada = {}
 
-        confrontos[letra] = processar_rodada_grupo(
-            grupo,
-            pontos_rodada,
-            rodada
-        )
+        for letra, grupo in grupos.items():
+
+            confrontos_rodada = processar_rodada_grupo(
+                grupo,
+                pontos_rodada,
+                rodada
+            )
+
+            confrontos[letra].extend(
+                confrontos_rodada
+            )
 
     return confrontos
     
