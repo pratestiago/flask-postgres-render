@@ -3,7 +3,7 @@
 
 def processar_champions(conn, ano, rodada):
 
-    if rodada not in (20, 21, 22):
+    if rodada not in (20, 21, 22, 23, 24, 25, 26, 27, 28):
         return
 
     cursor = conn.cursor()
@@ -43,6 +43,7 @@ def processar_champions(conn, ano, rodada):
                 cursor,
                 ano
             )
+
         elif rodada == 22:
 
             processar_volta_repescagem(
@@ -58,7 +59,15 @@ def processar_champions(conn, ano, rodada):
             criar_jogos_grupos_champions(
                 cursor,
                 ano
-            )   
+            )
+
+        elif rodada in (23, 24, 25, 26, 27, 28):
+
+            processar_rodada_grupos_champions(
+                cursor,
+                ano,
+                rodada
+            )
 
     finally:
         cursor.close()
@@ -1057,4 +1066,171 @@ def criar_jogos_grupos_champions(cursor, ano):
     print(
         "[Champions] 192 jogos da fase de grupos criados "
         "(16 grupos x 12 jogos)."
+    )    
+    
+def processar_rodada_grupos_champions(cursor, ano, rodada):
+    """
+    Processa uma rodada da fase de grupos da Champions.
+
+    Rodadas válidas:
+    23, 24, 25, 26, 27 e 28.
+
+    A função:
+    - busca os jogos já criados em champions_grupo_jogos;
+    - busca os pontos reais em resultado_rodada;
+    - grava pontuacao_a e pontuacao_b;
+    - marca o jogo como finalizado.
+    """
+
+    if rodada not in (23, 24, 25, 26, 27, 28):
+        raise ValueError(
+            f"Rodada {rodada} não pertence à fase de grupos."
+        )
+
+    print(
+        f"[Champions] Processando fase de grupos - rodada {rodada}..."
+    )
+
+    # =========================
+    # LOCALIZAR COMPETIÇÃO
+    # =========================
+    cursor.execute("""
+        SELECT id
+        FROM competicoes
+        WHERE tipo = 'champions'
+          AND ano = %s
+        ORDER BY id
+        LIMIT 1
+    """, (ano,))
+
+    competicao = cursor.fetchone()
+
+    if not competicao:
+        raise RuntimeError(
+            f"Champions {ano} não encontrada."
+        )
+
+    competicao_id = competicao[0]
+
+    # =========================
+    # LOCALIZAR RODADA
+    # =========================
+    cursor.execute("""
+        SELECT id
+        FROM rodadas
+        WHERE ano = %s
+          AND numero = %s
+    """, (ano, rodada))
+
+    rodada_db = cursor.fetchone()
+
+    if not rodada_db:
+        raise RuntimeError(
+            f"Rodada {rodada} do ano {ano} não encontrada."
+        )
+
+    rodada_id = rodada_db[0]
+
+    # =========================
+    # BUSCAR JOGOS
+    # =========================
+    cursor.execute("""
+        SELECT
+            id,
+            grupo,
+            ordem_na_rodada,
+            time_a_id,
+            time_b_id
+        FROM champions_grupo_jogos
+        WHERE competicao_id = %s
+          AND ano = %s
+          AND rodada = %s
+        ORDER BY
+            grupo,
+            ordem_na_rodada
+    """, (
+        competicao_id,
+        ano,
+        rodada
+    ))
+
+    jogos = cursor.fetchall()
+
+    # 16 grupos x 2 jogos = 32
+    if len(jogos) != 32:
+        raise RuntimeError(
+            f"Esperados 32 jogos na rodada {rodada}, "
+            f"mas foram encontrados {len(jogos)}."
+        )
+
+    # =========================
+    # PROCESSAR JOGOS
+    # =========================
+    for (
+        jogo_id,
+        grupo,
+        ordem,
+        time_a_id,
+        time_b_id
+    ) in jogos:
+
+        # Pontuação do time A
+        cursor.execute("""
+            SELECT pontos
+            FROM resultado_rodada
+            WHERE rodada_id = %s
+              AND time_id = %s
+        """, (
+            rodada_id,
+            time_a_id
+        ))
+
+        resultado_a = cursor.fetchone()
+
+        if not resultado_a:
+            raise RuntimeError(
+                f"Pontuação não encontrada para o time "
+                f"{time_a_id} na rodada {rodada}."
+            )
+
+        pontos_a = resultado_a[0]
+
+        # Pontuação do time B
+        cursor.execute("""
+            SELECT pontos
+            FROM resultado_rodada
+            WHERE rodada_id = %s
+              AND time_id = %s
+        """, (
+            rodada_id,
+            time_b_id
+        ))
+
+        resultado_b = cursor.fetchone()
+
+        if not resultado_b:
+            raise RuntimeError(
+                f"Pontuação não encontrada para o time "
+                f"{time_b_id} na rodada {rodada}."
+            )
+
+        pontos_b = resultado_b[0]
+
+        # Atualizar jogo
+        cursor.execute("""
+            UPDATE champions_grupo_jogos
+            SET
+                pontuacao_a = %s,
+                pontuacao_b = %s,
+                status = 'finalizado'
+            WHERE id = %s
+        """, (
+            pontos_a,
+            pontos_b,
+            jogo_id
+        ))
+
+    print(
+        f"[Champions] Rodada {rodada} da fase de grupos "
+        f"processada: {len(jogos)} jogos atualizados."
     )    
