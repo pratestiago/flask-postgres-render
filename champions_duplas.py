@@ -49,12 +49,20 @@ def processar_champions_duplas(conn, ano, rodada_atual):
                 grupos,
                 rodada_atual
             )
+        
+        
+        oitavas = None
 
+        if rodada_atual >= 27:
+            oitavas = montar_oitavas(grupos)
+        
+        
+    
         resultado = {
             "ranking": ranking,
             "grupos": grupos,
             "fase_grupos": fase_grupos,
-            "oitavas": None,
+            "oitavas": oitavas,
             "quartas": None,
             "semifinais": None,
             "final": None,
@@ -524,6 +532,94 @@ def processar_fase_grupos(
             confrontos[letra].extend(
                 confrontos_rodada
             )
+            
+    # Ordena a classificação de cada grupo
+    for letra, grupo in grupos.items():
+        grupo.sort(
+        key=lambda dupla: (
+            dupla.get("pg", 0),
+            dupla.get("gp", 0)
+        ),
+        reverse=True
+    )
+
+    # posição atual dentro do grupo
+        for posicao, dupla in enumerate(grupo, start=1):
+            dupla["posicao_grupo"] = posicao            
 
     return confrontos
     
+    # =========================
+# MONTAR OITAVAS DE FINAL
+# =========================
+
+def montar_oitavas(grupos):
+    """
+    Monta os confrontos das oitavas de final usando
+    os dois primeiros colocados de cada grupo.
+
+    Cruzamentos:
+    O1 -> 1º A x 2º B
+    O2 -> 1º C x 2º D
+    O3 -> 1º E x 2º F
+    O4 -> 1º G x 2º H
+
+    O5 -> 1º B x 2º A
+    O6 -> 1º D x 2º C
+    O7 -> 1º F x 2º E
+    O8 -> 1º H x 2º G
+    """
+
+    cruzamentos = [
+        ("A", 0, "B", 1),
+        ("C", 0, "D", 1),
+        ("E", 0, "F", 1),
+        ("G", 0, "H", 1),
+
+        ("B", 0, "A", 1),
+        ("D", 0, "C", 1),
+        ("F", 0, "E", 1),
+        ("H", 0, "G", 1),
+    ]
+
+    oitavas = []
+
+    for numero, (
+        grupo_a,
+        indice_a,
+        grupo_b,
+        indice_b
+    ) in enumerate(cruzamentos, start=1):
+
+        dupla_a = grupos[grupo_a][indice_a]
+        dupla_b = grupos[grupo_b][indice_b]
+
+        oitavas.append({
+            "jogo": numero,
+
+            "dupla_a": dupla_a,
+            "grupo_a": grupo_a,
+            "posicao_a": indice_a + 1,
+
+            "dupla_b": dupla_b,
+            "grupo_b": grupo_b,
+            "posicao_b": indice_b + 1,
+
+            "rodada_ida": 28,
+            "rodada_volta": 29,
+
+            "pontos_ida_a": None,
+            "pontos_ida_b": None,
+
+            "pontos_volta_a": None,
+            "pontos_volta_b": None,
+
+            "total_a": None,
+            "total_b": None,
+
+            "vencedor": None,
+
+            "status": "aguardando",
+        })
+
+    return oitavas
