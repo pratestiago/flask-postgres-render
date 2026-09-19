@@ -1234,3 +1234,232 @@ def processar_rodada_grupos_champions(cursor, ano, rodada):
         f"[Champions] Rodada {rodada} da fase de grupos "
         f"processada: {len(jogos)} jogos atualizados."
     )    
+    
+def calcular_classificacao_grupos_champions(cursor, ano):
+    """
+    Calcula a classificação da fase de grupos da Champions.
+
+    Pontuação:
+    - vitória por 5 pontos ou mais: 3 x 0
+    - vitória por menos de 5 pontos: 2 x 1
+    - empate: 1 x 1
+
+    Desempates:
+    1. pontos da tabela
+    2. saldo de pontos Cartola
+    3. pontos Cartola marcados
+    4. melhor ranking inicial
+    """
+
+    # =========================
+    # LOCALIZAR COMPETIÇÃO
+    # =========================
+    cursor.execute("""
+        SELECT id
+        FROM competicoes
+        WHERE tipo = 'champions'
+          AND ano = %s
+        ORDER BY id
+        LIMIT 1
+    """, (ano,))
+
+    competicao = cursor.fetchone()
+
+    if not competicao:
+        return {}
+
+    competicao_id = competicao[0]
+
+    # =========================
+    # TIMES DOS GRUPOS
+    # =========================
+    cursor.execute("""
+        SELECT
+            cg.grupo,
+            cg.time_id,
+            cg.ranking_inicial,
+            t.nome_time,
+            c.nome
+        FROM champions_grupos cg
+        JOIN times t
+            ON t.id = cg.time_id
+        LEFT JOIN cartoleiros c
+            ON c.id = t.cartoleiro_id
+        WHERE cg.competicao_id = %s
+        ORDER BY
+            cg.grupo,
+            cg.ranking_inicial
+    """, (competicao_id,))
+
+    classificacao = {}
+
+    for (
+        grupo,
+        time_id,
+        ranking,
+        nome_time,
+        cartoleiro
+    ) in cursor.fetchall():
+
+        classificacao.setdefault(grupo, {})
+
+        classificacao[grupo][time_id] = {
+            "time_id": time_id,
+            "time": nome_time,
+            "cartoleiro": cartoleiro,
+            "ranking": ranking,
+
+            "j": 0,
+            "v": 0,
+            "e": 0,
+            "d": 0,
+
+            "pontos": 0,
+
+            "pro": 0.0,
+            "contra": 0.0,
+            "saldo": 0.0,
+        }
+
+    # =========================
+    # JOGOS FINALIZADOS
+    # =========================
+    cursor.execute("""
+        SELECT
+            grupo,
+            time_a_id,
+            time_b_id,
+            pontuacao_a,
+            pontuacao_b
+        FROM champions_grupo_jogos
+        WHERE competicao_id = %s
+          AND ano = %s
+          AND status = 'finalizado'
+          AND pontuacao_a IS NOT NULL
+          AND pontuacao_b IS NOT NULL
+        ORDER BY
+            rodada,
+            grupo,
+            ordem_na_rodada
+    """, (
+        competicao_id,
+        ano
+    ))
+
+    jogos = cursor.fetchall()
+
+    # =========================
+    # CALCULAR CLASSIFICAÇÃO
+    # =========================
+    for (
+        grupo,
+        time_a_id,
+        time_b_id,
+        pontuacao_a,
+        pontuacao_b
+    ) in jogos:
+
+        if grupo not in classificacao:
+            continue
+
+        if time_a_id not in classificacao[grupo]:
+            continue
+
+        if time_b_id not in classificacao[grupo]:
+            continue
+
+        time_a = classificacao[grupo][time_a_id]
+        time_b = classificacao[grupo][time_b_id]
+
+        pontos_a = float(pontuacao_a)
+        pontos_b = float(pontuacao_b)
+
+        # Jogos
+        time_a["j"] += 1
+        time_b["j"] += 1
+
+        # Pontos Cartola pró/contra
+        time_a["pro"] += pontos_a
+        time_a["contra"] += pontos_b
+
+        time_b["pro"] += pontos_b
+        time_b["contra"] += pontos_a
+
+        # =========================
+        # EMPATE
+        # =========================
+        if pontos_a == pontos_b:
+
+            time_a["e"] += 1
+            time_b["e"] += 1
+
+            time_a["pontos"] += 1
+            time_b["pontos"] += 1
+
+        # =========================
+        # TIME A VENCEU
+        # =========================
+        elif pontos_a > pontos_b:
+
+            diferenca = pontos_a - pontos_b
+
+            time_a["v"] += 1
+            time_b["d"] += 1
+
+            if diferenca >= 5:
+                time_a["pontos"] += 3
+            else:
+                time_a["pontos"] += 2
+                time_b["pontos"] += 1
+
+        # =========================
+        # TIME B VENCEU
+        # =========================
+        else:
+
+            diferenca = pontos_b - pontos_a
+
+            time_b["v"] += 1
+            time_a["d"] += 1
+
+            if diferenca >= 5:
+                time_b["pontos"] += 3
+            else:
+                time_b["pontos"] += 2
+                time_a["pontos"] += 1
+
+        time_a["saldo"] = (
+            time_a["pro"] - time_a["contra"]
+        )
+
+        time_b["saldo"] = (
+            time_b["pro"] - time_b["contra"]
+        )
+
+    # =========================
+    # ORDENAR GRUPOS
+    # =========================
+    resultado = {}
+
+    for grupo, times in classificacao.items():
+
+        lista = list(times.values())
+
+        lista.sort(
+            key=lambda time: (
+                -time["pontos"],
+                -time["saldo"],
+                -time["pro"],
+                time["ranking"]
+            )
+        )
+
+        for posicao, time in enumerate(
+            lista,
+            start=1
+        ):
+            time["posicao"] = posicao
+
+        resultado[grupo] = lista
+
+    return resultado    

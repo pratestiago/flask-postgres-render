@@ -41,9 +41,11 @@
 
                             <tr>
                                 <td>{{ ranking }}</td>
+
                                 <td>
                                     <strong>{{ time }}</strong>
                                 </td>
+
                                 <td>{{ cartoleiro }}</td>
                             </tr>
 
@@ -329,61 +331,139 @@
                             </h3>
 
 
-                            <!-- TIMES DO GRUPO -->
-                            <table class="tabela">
+                            <!-- ========================= -->
+                            <!-- CLASSIFICAÇÃO DO GRUPO -->
+                            <!-- ========================= -->
 
-                                <thead>
+                            {% if classificacao_grupos.get(grupo) %}
 
-                                    <tr>
-                                        <th>Ranking</th>
-                                        <th>Time</th>
-                                        <th>Cartoleiro</th>
-                                        <th>Origem</th>
-                                    </tr>
+                                <table class="tabela">
 
-                                </thead>
-
-                                <tbody>
-
-                                    {% for item in times %}
+                                    <thead>
 
                                         <tr>
-
-                                            <td>
-                                                {{ item.ranking }}
-                                            </td>
-
-                                            <td>
-                                                <strong>
-                                                    {{ item.time }}
-                                                </strong>
-                                            </td>
-
-                                            <td>
-                                                {{ item.cartoleiro or "—" }}
-                                            </td>
-
-                                            <td>
-
-                                                {% if item.origem == "direto" %}
-
-                                                    ⭐ Direto
-
-                                                {% else %}
-
-                                                    ⚔️ Repescagem
-
-                                                {% endif %}
-
-                                            </td>
-
+                                            <th>Pos</th>
+                                            <th>Time</th>
+                                            <th>J</th>
+                                            <th>V</th>
+                                            <th>E</th>
+                                            <th>D</th>
+                                            <th>PTS</th>
+                                            <th>Pró</th>
+                                            <th>Contra</th>
+                                            <th>Saldo</th>
                                         </tr>
 
-                                    {% endfor %}
+                                    </thead>
 
-                                </tbody>
+                                    <tbody>
 
-                            </table>
+                                        {% for item in classificacao_grupos.get(grupo) %}
+
+                                            <tr>
+
+                                                <!-- POSIÇÃO -->
+                                                <td>
+                                                    <strong>
+                                                        {{ item.posicao }}º
+                                                    </strong>
+                                                </td>
+
+
+                                                <!-- TIME -->
+                                                <td>
+
+                                                    <strong>
+                                                        {{ item.time }}
+                                                    </strong>
+
+                                                    {% if item.cartoleiro %}
+
+                                                        <br>
+
+                                                        <small>
+                                                            {{ item.cartoleiro }}
+                                                        </small>
+
+                                                    {% endif %}
+
+                                                </td>
+
+
+                                                <!-- JOGOS -->
+                                                <td>
+                                                    {{ item.j }}
+                                                </td>
+
+
+                                                <!-- VITÓRIAS -->
+                                                <td>
+                                                    {{ item.v }}
+                                                </td>
+
+
+                                                <!-- EMPATES -->
+                                                <td>
+                                                    {{ item.e }}
+                                                </td>
+
+
+                                                <!-- DERROTAS -->
+                                                <td>
+                                                    {{ item.d }}
+                                                </td>
+
+
+                                                <!-- PONTOS DA TABELA -->
+                                                <td>
+                                                    <strong>
+                                                        {{ item.pontos }}
+                                                    </strong>
+                                                </td>
+
+
+                                                <!-- PONTOS CARTOLA PRÓ -->
+                                                <td>
+                                                    {{ "%.2f"|format(item.pro) }}
+                                                </td>
+
+
+                                                <!-- PONTOS CARTOLA CONTRA -->
+                                                <td>
+                                                    {{ "%.2f"|format(item.contra) }}
+                                                </td>
+
+
+                                                <!-- SALDO -->
+                                                <td>
+
+                                                    {% if item.saldo > 0 %}
+
+                                                        +{{ "%.2f"|format(item.saldo) }}
+
+                                                    {% else %}
+
+                                                        {{ "%.2f"|format(item.saldo) }}
+
+                                                    {% endif %}
+
+                                                </td>
+
+                                            </tr>
+
+                                        {% endfor %}
+
+                                    </tbody>
+
+                                </table>
+
+                            {% else %}
+
+                                <p>
+                                    ⏳ Classificação ainda não disponível.
+                                </p>
+
+                            {% endif %}
 
 
                             <!-- ========================= -->

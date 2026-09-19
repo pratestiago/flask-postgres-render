@@ -2,6 +2,8 @@ from flask import Flask, render_template, abort
 from qual_banco_conectado import print_info_conexao, get_info_conexao, get_connection
 from copamundo import get_classificacao_grupos
 from champions_duplas import processar_champions_duplas
+from champions import calcular_classificacao_grupos_champions
+
 import psycopg2
 import os
 
@@ -1219,7 +1221,14 @@ def champions():
 
                 "status": status
             })
-
+        
+        # =========================
+        # CLASSIFICAÇÃO DOS GRUPOS
+        # =========================
+        classificacao_grupos = calcular_classificacao_grupos_champions(
+            cursor,
+            ano
+        )
 
     finally:
         cursor.close()
@@ -1233,7 +1242,8 @@ def champions():
         classificados_diretos=classificados_diretos,
         repescagem=repescagem,
         grupos=grupos,
-        jogos_grupos=jogos_grupos
+        jogos_grupos=jogos_grupos,
+        classificacao_grupos=classificacao_grupos
     )
     
     
