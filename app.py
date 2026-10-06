@@ -1229,6 +1229,85 @@ def champions():
             cursor,
             ano
         )
+        
+                # =========================
+        # 16-AVOS DE FINAL
+        # =========================
+        cursor.execute("""
+            SELECT
+                cc.ordem_na_fase,
+
+                cc.time_a_id,
+                ta.nome_time AS time_a,
+                ca.nome AS cartoleiro_a,
+                cc.ranking_a,
+
+                cc.time_b_id,
+                tb.nome_time AS time_b,
+                cb.nome AS cartoleiro_b,
+                cc.ranking_b,
+
+                cc.pontuacao_a,
+                cc.pontuacao_b,
+                cc.status
+
+            FROM competicao_confrontos cc
+
+            JOIN competicao_fases cf
+                ON cf.id = cc.fase_id
+
+            JOIN times ta
+                ON ta.id = cc.time_a_id
+
+            LEFT JOIN cartoleiros ca
+                ON ca.id = ta.cartoleiro_id
+
+            JOIN times tb
+                ON tb.id = cc.time_b_id
+
+            LEFT JOIN cartoleiros cb
+                ON cb.id = tb.cartoleiro_id
+
+            WHERE cc.competicao_id = %s
+              AND LOWER(cf.nome_fase) = '16-avos'
+
+            ORDER BY cc.ordem_na_fase
+        """, (competicao_id,))
+
+        confrontos_16_avos = []
+
+        for (
+            ordem,
+            time_a_id,
+            time_a,
+            cartoleiro_a,
+            ranking_a,
+            time_b_id,
+            time_b,
+            cartoleiro_b,
+            ranking_b,
+            pontuacao_a,
+            pontuacao_b,
+            status
+        ) in cursor.fetchall():
+
+            confrontos_16_avos.append({
+                "ordem": ordem,
+
+                "time_a_id": time_a_id,
+                "time_a": time_a,
+                "cartoleiro_a": cartoleiro_a,
+                "ranking_a": ranking_a,
+
+                "time_b_id": time_b_id,
+                "time_b": time_b,
+                "cartoleiro_b": cartoleiro_b,
+                "ranking_b": ranking_b,
+
+                "pontuacao_a": pontuacao_a,
+                "pontuacao_b": pontuacao_b,
+                "status": status
+            })
 
     finally:
         cursor.close()
@@ -1243,7 +1322,8 @@ def champions():
         repescagem=repescagem,
         grupos=grupos,
         jogos_grupos=jogos_grupos,
-        classificacao_grupos=classificacao_grupos
+        classificacao_grupos=classificacao_grupos,
+        confrontos_16_avos=confrontos_16_avos
     )
     
     

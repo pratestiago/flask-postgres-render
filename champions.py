@@ -61,12 +61,28 @@ def processar_champions(conn, ano, rodada):
                 ano
             )
 
-        elif rodada in (23, 24, 25, 26, 27, 28):
+        elif rodada in (23, 24, 25, 26, 27):
 
             processar_rodada_grupos_champions(
                 cursor,
                 ano,
                 rodada
+            )
+
+        elif rodada == 28:
+
+            # Processa a última rodada da fase de grupos
+            processar_rodada_grupos_champions(
+                cursor,
+                ano,
+                rodada
+            )
+
+            # Com a fase de grupos encerrada,
+            # cria os 16 confrontos dos 16-avos
+            criar_16_avos_champions(
+                cursor,
+                ano
             )
 
     finally:
@@ -1463,3 +1479,208 @@ def calcular_classificacao_grupos_champions(cursor, ano):
         resultado[grupo] = lista
 
     return resultado    
+
+def criar_16_avos_champions(cursor, ano):
+    """
+    Cria os 16 confrontos dos 16-avos da Champions.
+
+    Chaveamento:
+    1º A x 2º B
+    1º B x 2º A
+    1º C x 2º D
+    1º D x 2º C
+    ...
+    1º O x 2º P
+    1º P x 2º O
+
+    Ida: rodada 29
+    Volta: rodada 30
+    """
+
+    print("[Champions] Criando confrontos dos 16-avos...")
+
+    # =========================
+    # LOCALIZAR COMPETIÇÃO E FASE
+    # =========================
+    cursor.execute("""
+        SELECT
+            c.id,
+            cf.id,
+            cf.rodada
+        FROM competicoes c
+        JOIN competicao_fases cf
+            ON cf.competicao_id = c.id
+        WHERE c.tipo = 'champions'
+          AND c.ano = %s
+          AND LOWER(cf.nome_fase) = '16-avos'
+        LIMIT 1
+    """, (ano,))
+
+    dados = cursor.fetchone()
+
+    if not dados:
+        raise RuntimeError(
+            f"Fase 16-avos da Champions {ano} não encontrada."
+        )
+
+    competicao_id, fase_id, rodada_fase = dados
+
+    # =========================
+    # GARANTIR QUE A FASE DE
+    # GRUPOS TERMINOU
+    # =========================
+    cursor.execute("""
+        SELECT COUNT(*)
+        FROM champions_grupo_jogos
+        WHERE competicao_id = %s
+          AND ano = %s
+          AND status = 'finalizado'
+    """, (competicao_id, ano))
+
+    total_finalizados = cursor.fetchone()[0]
+
+    if total_finalizados != 192:
+        raise RuntimeError(
+            f"A fase de grupos ainda não terminou. "
+            f"Jogos finalizados: {total_finalizados}/192."
+        )
+
+    # =========================
+    # EVITAR DUPLICAÇÃO
+    # =========================
+    cursor.execute("""
+        SELECT COUNT(*)
+        FROM competicao_confrontos
+        WHERE competicao_id = %s
+          AND fase_id = %s
+    """, (competicao_id, fase_id))
+
+    total_existente = cursor.fetchone()[0]
+
+    if total_existente > 0:
+        print(
+            f"[Champions] 16-avos já possuem "
+            f"{total_existente} confrontos."
+        )
+        return
+
+    # =========================
+    # CLASSIFICAÇÃO FINAL
+    # DOS GRUPOS
+    # =========================
+    classificacao = calcular_classificacao_grupos_champions(
+        cursor,
+        ano
+    )
+
+    if len(classificacao) != 16:
+        raise RuntimeError(
+            f"Esperados 16 grupos, encontrados "
+            f"{len(classificacao)}."
+        )
+
+    classificados = {}
+
+    for grupo in "ABCDEFGHIJKLMNOP":
+
+        times = classificacao.get(grupo)
+
+        if not times or len(times) != 4:
+            raise RuntimeError(
+                f"Classificação inválida no grupo {grupo}."
+            )
+
+        classificados[grupo] = {
+            "primeiro": times[0],
+            "segundo": times[1]
+        }
+
+    # =========================
+    # CHAVEAMENTO
+    # =========================
+    confrontos = []
+
+    pares_grupos = [
+        ("A", "B"),
+        ("C", "D"),
+        ("E", "F"),
+        ("G", "H"),
+        ("I", "J"),
+        ("K", "L"),
+        ("M", "N"),
+        ("O", "P"),
+    ]
+
+    for grupo_a, grupo_b in pares_grupos:
+
+        # 1º A x 2º B
+        confrontos.append((
+            classificados[grupo_a]["primeiro"],
+            classificados[grupo_b]["segundo"]
+        ))
+
+        # 1º B x 2º A
+        confrontos.append((
+            classificados[grupo_b]["primeiro"],
+            classificados[grupo_a]["segundo"]
+        ))
+
+    if len(confrontos) != 16:
+        raise RuntimeError(
+            f"Esperados 16 confrontos, "
+            f"foram montados {len(confrontos)}."
+        )
+
+    # =========================
+    # GRAVAR CONFRONTOS
+    # =========================
+    for ordem, (time_a, time_b) in enumerate(
+        confrontos,
+        start=1
+    ):
+
+        cursor.execute("""
+            INSERT INTO competicao_confrontos (
+                competicao_id,
+                fase_id,
+                rodada,
+                time_a_id,
+                time_b_id,
+                ranking_a,
+                ranking_b,
+                pontuacao_a,
+                pontuacao_b,
+                vencedor_id,
+                perdedor_id,
+                status,
+                origem_time_a_confronto_id,
+                origem_time_b_confronto_id,
+                ordem_na_fase,
+                lado_chave
+            )
+            VALUES (
+                %s, %s, %s,
+                %s, %s,
+                %s, %s,
+                NULL, NULL,
+                NULL, NULL,
+                'criado',
+                NULL, NULL,
+                %s,
+                NULL
+            )
+        """, (
+            competicao_id,
+            fase_id,
+            rodada_fase,
+            time_a["time_id"],
+            time_b["time_id"],
+            time_a["ranking"],
+            time_b["ranking"],
+            ordem
+        ))
+
+    print(
+        "[Champions] 16 confrontos dos 16-avos "
+        "criados com sucesso."
+    )

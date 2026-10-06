@@ -55,6 +55,13 @@ def processar_champions_duplas(conn, ano, rodada_atual):
 
         if rodada_atual >= 27:
             oitavas = montar_oitavas(grupos)
+
+        if rodada_atual >= 28 and oitavas:
+            oitavas = processar_ida_oitavas(
+                cursor,
+                ano,
+                oitavas
+            )
         
         
     
@@ -621,5 +628,37 @@ def montar_oitavas(grupos):
 
             "status": "aguardando",
         })
+
+    return oitavas
+
+# =========================
+# PROCESSAR IDA DAS OITAVAS
+# =========================
+
+def processar_ida_oitavas(cursor, ano, oitavas):
+    """
+    Preenche os resultados da rodada 28,
+    correspondente aos jogos de ida das oitavas.
+    """
+
+    pontos_rodada = buscar_pontos_rodada_duplas(
+        cursor,
+        ano,
+        28
+    )
+
+    for confronto in oitavas:
+
+        dupla_a = confronto["dupla_a"]
+        dupla_b = confronto["dupla_b"]
+
+        pontos_a = pontos_rodada.get(dupla_a["id"])
+        pontos_b = pontos_rodada.get(dupla_b["id"])
+
+        confronto["pontos_ida_a"] = pontos_a
+        confronto["pontos_ida_b"] = pontos_b
+
+        if pontos_a is not None and pontos_b is not None:
+            confronto["status"] = "ida_encerrada"
 
     return oitavas

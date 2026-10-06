@@ -596,6 +596,126 @@
 
     </div>
 
+        <!-- ========================= -->
+    <!-- 16-AVOS DE FINAL -->
+    <!-- ========================= -->
+    <div class="card">
+
+        <div class="card-header">
+            <h2>⚔️ 16-avos de Final</h2>
+
+            {% if confrontos_16_avos %}
+                <span>Rodadas 29 e 30</span>
+            {% endif %}
+        </div>
+
+        <div class="card-body">
+
+            {% if confrontos_16_avos %}
+
+                <table class="tabela">
+
+                    <thead>
+                        <tr>
+                            <th>#</th>
+                            <th>Ranking</th>
+                            <th>Time A</th>
+                            <th>Total</th>
+                            <th></th>
+                            <th>Total</th>
+                            <th>Time B</th>
+                            <th>Ranking</th>
+                        </tr>
+                    </thead>
+
+                    <tbody>
+
+                        {% for confronto in confrontos_16_avos %}
+
+                            <tr>
+
+                                <td>
+                                    {{ confronto.ordem }}
+                                </td>
+
+                                <td>
+                                    {{ confronto.ranking_a }}
+                                </td>
+
+                                <td>
+                                    <strong>
+                                        {{ confronto.time_a }}
+                                    </strong>
+
+                                    {% if confronto.cartoleiro_a %}
+                                        <br>
+                                        <small>
+                                            {{ confronto.cartoleiro_a }}
+                                        </small>
+                                    {% endif %}
+                                </td>
+
+                                <td>
+                                    {% if confronto.pontuacao_a is not none %}
+                                        <strong>
+                                            {{ "%.2f"|format(confronto.pontuacao_a) }}
+                                        </strong>
+                                    {% else %}
+                                        -
+                                    {% endif %}
+                                </td>
+
+                                <td>
+                                    x
+                                </td>
+
+                                <td>
+                                    {% if confronto.pontuacao_b is not none %}
+                                        <strong>
+                                            {{ "%.2f"|format(confronto.pontuacao_b) }}
+                                        </strong>
+                                    {% else %}
+                                        -
+                                    {% endif %}
+                                </td>
+
+                                <td>
+                                    <strong>
+                                        {{ confronto.time_b }}
+                                    </strong>
+
+                                    {% if confronto.cartoleiro_b %}
+                                        <br>
+                                        <small>
+                                            {{ confronto.cartoleiro_b }}
+                                        </small>
+                                    {% endif %}
+                                </td>
+
+                                <td>
+                                    {{ confronto.ranking_b }}
+                                </td>
+
+                            </tr>
+
+                        {% endfor %}
+
+                    </tbody>
+
+                </table>
+
+            {% else %}
+
+                <p>
+                    ⏳ Confrontos dos 16-avos ainda não definidos.
+                </p>
+
+            {% endif %}
+
+        </div>
+
+    </div>
+
 </div>
 
 {% endblock %}

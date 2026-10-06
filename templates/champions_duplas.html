@@ -266,11 +266,33 @@
 
                             <hr>
 
-                            <small>
-                                Rodadas {{ confronto.rodada_ida }}
-                                e {{ confronto.rodada_volta }}
-                            </small>
+                       {% if confronto.pontos_ida_a is not none
+      and confronto.pontos_ida_b is not none %}
 
+    <div class="text-center">
+
+        <small>
+            Ida — Rodada {{ confronto.rodada_ida }}
+        </small>
+
+        <br>
+
+        <strong>
+            {{ "%.2f"|format(confronto.pontos_ida_a) }}
+            ×
+            {{ "%.2f"|format(confronto.pontos_ida_b) }}
+        </strong>
+
+    </div>
+
+{% else %}
+
+    <small>
+        Rodadas {{ confronto.rodada_ida }}
+        e {{ confronto.rodada_volta }}
+    </small>
+
+{% endif %}
                         </div>
 
                     </div>

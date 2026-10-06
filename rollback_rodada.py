@@ -159,6 +159,71 @@ def rollback_rodada(ano, rodada):
         # 5. AJUSTAR CHAMPIONS
         # =========================
         print("🧹 Ajustando Champions...")
+        
+                # =========================
+        # FASE DE GRUPOS
+        # =========================
+        # Ao voltar uma rodada entre 23 e 28,
+        # limpa os resultados dos jogos posteriores
+        # à rodada que permanecerá no banco.
+        if rodada_limite < 28:
+            cursor.execute("""
+                UPDATE champions_grupo_jogos
+                SET pontuacao_a = NULL,
+                    pontuacao_b = NULL,
+                    status = 'criado'
+                WHERE competicao_id IN (
+                    SELECT id
+                    FROM competicoes
+                    WHERE tipo = 'champions'
+                      AND ano = %s
+                )
+                  AND ano = %s
+                  AND rodada > %s
+            """, (
+                ano,
+                ano,
+                rodada_limite
+            ))
+
+            print(
+                "🧹 Resultados posteriores da fase de grupos "
+                "da Champions removidos."
+            )
+            
+                    # =========================
+        # MATA-MATA DA CHAMPIONS
+        # =========================
+        # Se voltamos para antes da rodada 29,
+        # os 16-avos ainda não devem existir.
+        if rodada_limite < 29:
+
+            cursor.execute("""
+                DELETE FROM competicao_confrontos
+                WHERE competicao_id IN (
+                    SELECT id
+                    FROM competicoes
+                    WHERE tipo = 'champions'
+                      AND ano = %s
+                )
+                  AND fase_id IN (
+                    SELECT cf.id
+                    FROM competicao_fases cf
+                    JOIN competicoes c
+                      ON c.id = cf.competicao_id
+                    WHERE c.tipo = 'champions'
+                      AND c.ano = %s
+                      AND LOWER(cf.nome_fase) = '16-avos'
+                )
+            """, (
+                ano,
+                ano
+            ))
+
+            print(
+                "🧹 Confrontos dos 16-avos "
+                "da Champions removidos."
+            )
 
         # Voltou para antes da volta da repescagem.
         # Mantém o jogo de ida, mas remove o agregado,
