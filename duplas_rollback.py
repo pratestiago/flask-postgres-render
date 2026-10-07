@@ -1,10 +1,18 @@
 from qual_banco_conectado import get_connection
 
+
 # =========================
 # FUNÇÃO DE ROLLBACK DUPLAS
 # =========================
-
 def rollback_duplas(ano, rodada):
+
+    # =========================
+    # PROTEÇÃO
+    # =========================
+    if rodada < 20:
+        print("❌ Rollback bloqueado.")
+        print("Só é permitido fazer rollback da rodada 20 em diante.")
+        return
 
     conn = get_connection()
     cursor = conn.cursor()
@@ -28,12 +36,18 @@ def rollback_duplas(ano, rodada):
             return
 
         if rodada > max_rodada:
-            print(f"❌ Rodada {rodada} não existe. Última rodada é {max_rodada}.")
+            print(
+                f"❌ Rodada {rodada} não existe. "
+                f"Última rodada é {max_rodada}."
+            )
             return
 
-        print(f"\n⚠️ ATENÇÃO!")
+        rodada_limite = rodada - 1
+
+        print("\n⚠️ ATENÇÃO!")
         print(f"Rodada atual: {max_rodada}")
         print(f"Vai apagar da rodada {rodada} até {max_rodada}")
+        print(f"O sistema voltará para a rodada {rodada_limite}")
 
         confirmacao = input("Digite 'SIM' para continuar: ")
 
@@ -49,8 +63,10 @@ def rollback_duplas(ano, rodada):
         cursor.execute("""
             DELETE FROM duplas_times_pontuacoes
             WHERE rodada_id IN (
-                SELECT id FROM rodadas_duplas
-                WHERE ano = %s AND numero >= %s
+                SELECT id
+                FROM rodadas_duplas
+                WHERE ano = %s
+                  AND numero >= %s
             )
         """, (ano, rodada))
 
@@ -61,15 +77,21 @@ def rollback_duplas(ano, rodada):
 
         cursor.execute("""
             DELETE FROM rodadas_duplas
-            WHERE ano = %s AND numero >= %s
+            WHERE ano = %s
+              AND numero >= %s
         """, (ano, rodada))
 
+        # =========================
+        # FINALIZAR
+        # =========================
         conn.commit()
 
         print("\n✅ Rollback de duplas realizado com sucesso!")
+        print(f"📊 Sistema voltou para a rodada {rodada_limite}")
 
     except Exception as e:
         conn.rollback()
+
         print("\n❌ Erro:")
         print(e)
 
@@ -81,8 +103,8 @@ def rollback_duplas(ano, rodada):
 # =========================
 # EXECUÇÃO
 # =========================
-
 if __name__ == "__main__":
+
     try:
         ano = int(input("Ano: "))
         rodada = int(input("Rodada para rollback (duplas): "))
