@@ -1247,9 +1247,13 @@ def champions():
                 cb.nome AS cartoleiro_b,
                 cc.ranking_b,
 
-                cc.pontuacao_a,
-                cc.pontuacao_b,
-                cc.status
+                ji.pontuacao_a AS ida_a,
+ji.pontuacao_b AS ida_b,
+jv.pontuacao_a AS volta_a,
+jv.pontuacao_b AS volta_b,
+cc.pontuacao_a AS total_a,
+cc.pontuacao_b AS total_b,
+cc.status
 
             FROM competicao_confrontos cc
 
@@ -1267,6 +1271,14 @@ def champions():
 
             LEFT JOIN cartoleiros cb
                 ON cb.id = tb.cartoleiro_id
+
+                LEFT JOIN competicao_confronto_jogos ji
+    ON ji.confronto_id = cc.id
+   AND ji.ordem = 1
+
+LEFT JOIN competicao_confronto_jogos jv
+    ON jv.confronto_id = cc.id
+   AND jv.ordem = 2
 
             WHERE cc.competicao_id = %s
               AND LOWER(cf.nome_fase) = '16-avos'
@@ -1286,8 +1298,12 @@ def champions():
             time_b,
             cartoleiro_b,
             ranking_b,
-            pontuacao_a,
-            pontuacao_b,
+            ida_a,
+            ida_b,
+            volta_a,
+            volta_b,
+            total_a,
+            total_b,
             status
         ) in cursor.fetchall():
 
@@ -1304,8 +1320,15 @@ def champions():
                 "cartoleiro_b": cartoleiro_b,
                 "ranking_b": ranking_b,
 
-                "pontuacao_a": pontuacao_a,
-                "pontuacao_b": pontuacao_b,
+                "ida_a": ida_a,
+                "ida_b": ida_b,
+                "volta_a": volta_a,
+                "volta_b": volta_b,
+                "total_a": total_a,
+                "total_b": total_b,
+                "pontuacao_a": ida_a,
+"pontuacao_b": ida_b,
+
                 "status": status
             })
 

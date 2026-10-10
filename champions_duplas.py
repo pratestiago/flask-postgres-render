@@ -62,15 +62,26 @@ def processar_champions_duplas(conn, ano, rodada_atual):
                 ano,
                 oitavas
             )
+
+        if rodada_atual >= 29 and oitavas:
+            oitavas = processar_volta_oitavas(
+                cursor,
+                ano,
+                oitavas
+            )
         
         
     
+        quartas = None
+        if rodada_atual >= 29 and oitavas:
+            quartas = montar_quartas(oitavas)
+
         resultado = {
             "ranking": ranking,
             "grupos": grupos,
             "fase_grupos": fase_grupos,
             "oitavas": oitavas,
-            "quartas": None,
+            "quartas": quartas,
             "semifinais": None,
             "final": None,
             "campeao": None,
@@ -545,7 +556,8 @@ def processar_fase_grupos(
         grupo.sort(
         key=lambda dupla: (
             dupla.get("pg", 0),
-            dupla.get("gp", 0)
+            dupla.get("gp", 0),
+            -dupla["posicao"]  # ranking inicial da rodada 20
         ),
         reverse=True
     )
@@ -662,3 +674,85 @@ def processar_ida_oitavas(cursor, ano, oitavas):
             confronto["status"] = "ida_encerrada"
 
     return oitavas
+
+# =========================
+# PROCESSAR VOLTA DAS OITAVAS (RODADA 29)
+# =========================
+def processar_volta_oitavas(cursor, ano, oitavas):
+    """Soma ida (28) e volta (29), decidindo as 8 vagas nas quartas.
+
+    Desempate no agregado: PG, GP da fase de grupos e ranking da rodada 20.
+    Não grava nada no banco. Se faltar pontuação, mantém confronto pendente.
+    """
+    pontos_rodada = buscar_pontos_rodada_duplas(cursor, ano, 29)
+
+    for confronto in oitavas:
+        dupla_a = confronto["dupla_a"]
+        dupla_b = confronto["dupla_b"]
+        ida_a = confronto["pontos_ida_a"]
+        ida_b = confronto["pontos_ida_b"]
+        volta_a = pontos_rodada.get(dupla_a["id"])
+        volta_b = pontos_rodada.get(dupla_b["id"])
+
+        confronto["pontos_volta_a"] = volta_a
+        confronto["pontos_volta_b"] = volta_b
+
+        if any(p is None for p in (ida_a, ida_b, volta_a, volta_b)):
+            # Não define classificado sem as duas partidas completas.
+            continue
+
+        total_a = round(ida_a + volta_a, 6)
+        total_b = round(ida_b + volta_b, 6)
+        confronto["total_a"] = total_a
+        confronto["total_b"] = total_b
+
+        if total_a > total_b:
+            vencedor = dupla_a
+        elif total_b > total_a:
+            vencedor = dupla_b
+        else:
+            # Melhor campanha na fase de grupos, depois ranking inicial.
+            criterio_a = (dupla_a.get("pg", 0), dupla_a.get("gp", 0), -dupla_a["posicao"])
+            criterio_b = (dupla_b.get("pg", 0), dupla_b.get("gp", 0), -dupla_b["posicao"])
+            vencedor = dupla_a if criterio_a > criterio_b else dupla_b
+            confronto["desempate"] = "campanha_fase_grupos"
+
+        confronto["vencedor"] = vencedor
+        confronto["status"] = "encerrado"
+
+    return oitavas
+
+
+# =========================
+# MONTAR QUARTAS DE FINAL
+# =========================
+def montar_quartas(oitavas):
+    """O1 x O2, O3 x O4, O5 x O6, O7 x O8.
+
+    Exibe confrontos a partir da conclusão das oitavas, sem gravar no banco.
+    """
+    if len(oitavas) != 8:
+        raise ValueError("São necessários 8 confrontos de oitavas para montar as quartas.")
+
+    quartas = []
+    for indice in range(0, 8, 2):
+        confronto_a = oitavas[indice]
+        confronto_b = oitavas[indice + 1]
+        quartas.append({
+            "jogo": indice // 2 + 1,
+            "origem_a": f"O{confronto_a['jogo']}",
+            "origem_b": f"O{confronto_b['jogo']}",
+            "dupla_a": confronto_a.get("vencedor"),
+            "dupla_b": confronto_b.get("vencedor"),
+            "rodada_ida": 30,
+            "rodada_volta": 31,
+            "pontos_ida_a": None,
+            "pontos_ida_b": None,
+            "pontos_volta_a": None,
+            "pontos_volta_b": None,
+            "total_a": None,
+            "total_b": None,
+            "vencedor": None,
+            "status": "aguardando",
+        })
+    return quartas

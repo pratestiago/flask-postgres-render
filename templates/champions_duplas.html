@@ -266,33 +266,21 @@
 
                             <hr>
 
-                       {% if confronto.pontos_ida_a is not none
-      and confronto.pontos_ida_b is not none %}
-
-    <div class="text-center">
-
-        <small>
-            Ida — Rodada {{ confronto.rodada_ida }}
-        </small>
-
-        <br>
-
-        <strong>
-            {{ "%.2f"|format(confronto.pontos_ida_a) }}
-            ×
-            {{ "%.2f"|format(confronto.pontos_ida_b) }}
-        </strong>
-
-    </div>
-
-{% else %}
-
-    <small>
-        Rodadas {{ confronto.rodada_ida }}
-        e {{ confronto.rodada_volta }}
-    </small>
-
-{% endif %}
+                        <div class="text-center">
+                            <small>Ida — Rodada {{ confronto.rodada_ida }}</small>
+                            <div><strong>{% if confronto.pontos_ida_a is not none and confronto.pontos_ida_b is not none %}{{ "%.2f"|format(confronto.pontos_ida_a) }} × {{ "%.2f"|format(confronto.pontos_ida_b) }}{% else %}— × —{% endif %}</strong></div>
+                            <small>Volta — Rodada {{ confronto.rodada_volta }}</small>
+                            <div><strong>{% if confronto.pontos_volta_a is not none and confronto.pontos_volta_b is not none %}{{ "%.2f"|format(confronto.pontos_volta_a) }} × {{ "%.2f"|format(confronto.pontos_volta_b) }}{% else %}— × —{% endif %}</strong></div>
+                            <hr>
+                            <strong>Total:</strong>
+                            {% if confronto.total_a is not none and confronto.total_b is not none %}
+                                <div class="fw-bold">{{ "%.2f"|format(confronto.total_a) }} × {{ "%.2f"|format(confronto.total_b) }}</div>
+                            {% else %}<div>Aguardando conclusão</div>{% endif %}
+                            {% if confronto.vencedor %}
+                                <div class="mt-2 text-success fw-bold">✅ Classificada: {{ confronto.vencedor.nome }}</div>
+                                {% if confronto.desempate|default(false) %}<small class="text-muted">Desempate pela campanha na fase de grupos (PG, GP e ranking inicial).</small>{% endif %}
+                            {% endif %}
+                        </div>
                         </div>
 
                     </div>
@@ -305,6 +293,37 @@
 
     {% endif %}
 
+
+
+    {% if resultado.quartas %}
+        <hr>
+        <h2>Quartas de Final</h2>
+        <p>Ida na rodada 30 e volta na rodada 31. Cruzamentos definidos pelos vencedores das oitavas.</p>
+        <div class="row">
+            {% for confronto in resultado.quartas %}
+                <div class="col-md-6 mb-4">
+                    <div class="card h-100">
+                        <div class="card-header"><strong>Quartas — Jogo {{ confronto.jogo }}</strong></div>
+                        <div class="card-body">
+                            <div><strong>{% if confronto.dupla_a %}{{ confronto.dupla_a.nome }}{% else %}Vencedor {{ confronto.origem_a }}{% endif %}</strong></div>
+                            <small class="text-muted">{{ confronto.origem_a }}{% if confronto.dupla_a %} — {{ confronto.dupla_a.times }}{% endif %}</small>
+                            <div class="text-center my-2"><strong>×</strong></div>
+                            <div><strong>{% if confronto.dupla_b %}{{ confronto.dupla_b.nome }}{% else %}Vencedor {{ confronto.origem_b }}{% endif %}</strong></div>
+                            <small class="text-muted">{{ confronto.origem_b }}{% if confronto.dupla_b %} — {{ confronto.dupla_b.times }}{% endif %}</small>
+                            <hr>
+                            <div class="text-center">
+                                <small>Ida — Rodada {{ confronto.rodada_ida }}</small>
+                                <div><strong>— × —</strong></div>
+                                <small>Volta — Rodada {{ confronto.rodada_volta }}</small>
+                                <div><strong>— × —</strong></div>
+                                <div class="mt-2 text-muted">Aguardando resultados</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+    {% endif %}
 
 </div>
 

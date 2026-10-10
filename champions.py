@@ -3,7 +3,7 @@
 
 def processar_champions(conn, ano, rodada):
 
-    if rodada not in (20, 21, 22, 23, 24, 25, 26, 27, 28):
+    if rodada not in (20, 21, 22, 23, 24, 25, 26, 27, 28, 29):
         return
 
     cursor = conn.cursor()
@@ -84,6 +84,14 @@ def processar_champions(conn, ano, rodada):
                 cursor,
                 ano
             )
+
+        elif rodada == 29:
+
+            # Processa a ida dos 16-avos
+            processar_ida_16_avos_champions(
+                cursor,
+                ano
+            )   
 
     finally:
         cursor.close()
@@ -1684,3 +1692,114 @@ def criar_16_avos_champions(cursor, ano):
         "[Champions] 16 confrontos dos 16-avos "
         "criados com sucesso."
     )
+
+def processar_ida_16_avos_champions(cursor, ano):
+    """
+    Processa a ida dos 16-avos da Champions.
+    Rodada 29, ordem 1.
+    """
+
+    print("[Champions] Processando ida dos 16-avos...")
+
+    cursor.execute("""
+        SELECT c.id, cf.id
+        FROM competicoes c
+        JOIN competicao_fases cf
+            ON cf.competicao_id = c.id
+        WHERE c.tipo = 'champions'
+          AND c.ano = %s
+          AND LOWER(cf.nome_fase) = '16-avos'
+        LIMIT 1
+    """, (ano,))
+
+    dados = cursor.fetchone()
+
+    if not dados:
+        raise RuntimeError(
+            f"16-avos da Champions {ano} não encontrados."
+        )
+
+    competicao_id, fase_id = dados
+
+    cursor.execute("""
+        SELECT id
+        FROM rodadas
+        WHERE ano = %s
+          AND numero = 29
+    """, (ano,))
+
+    rodada = cursor.fetchone()
+
+    if not rodada:
+        raise RuntimeError(
+            f"Rodada 29 de {ano} não encontrada."
+        )
+
+    rodada_id = rodada[0]
+
+    cursor.execute("""
+        SELECT id, time_a_id, time_b_id
+        FROM competicao_confrontos
+        WHERE competicao_id = %s
+          AND fase_id = %s
+        ORDER BY ordem_na_fase
+    """, (competicao_id, fase_id))
+
+    confrontos = cursor.fetchall()
+
+    if len(confrontos) != 16:
+        raise RuntimeError(
+            f"Esperados 16 confrontos, encontrados {len(confrontos)}."
+        )
+
+    for confronto_id, time_a_id, time_b_id in confrontos:
+
+        cursor.execute("""
+            SELECT time_id, pontos
+            FROM resultado_rodada
+            WHERE rodada_id = %s
+              AND time_id IN (%s, %s)
+        """, (rodada_id, time_a_id, time_b_id))
+
+        pontos = dict(cursor.fetchall())
+
+        if time_a_id not in pontos or time_b_id not in pontos:
+            raise RuntimeError(
+                f"Pontuação incompleta no confronto {confronto_id} "
+                f"da rodada 29."
+            )
+
+        cursor.execute("""
+            INSERT INTO competicao_confronto_jogos (
+                confronto_id,
+                rodada_id,
+                ordem,
+                pontuacao_a,
+                pontuacao_b,
+                processado_em
+            )
+            VALUES (%s, %s, 1, %s, %s, CURRENT_TIMESTAMP)
+            ON CONFLICT (confronto_id, ordem)
+            DO UPDATE SET
+                rodada_id = EXCLUDED.rodada_id,
+                pontuacao_a = EXCLUDED.pontuacao_a,
+                pontuacao_b = EXCLUDED.pontuacao_b,
+                processado_em = CURRENT_TIMESTAMP
+        """, (
+            confronto_id,
+            rodada_id,
+            pontos[time_a_id],
+            pontos[time_b_id]
+        ))
+
+    cursor.execute("""
+        UPDATE competicao_confrontos
+        SET status = 'em_andamento'
+        WHERE competicao_id = %s
+          AND fase_id = %s
+    """, (competicao_id, fase_id))
+
+    print(
+        "[Champions] Ida dos 16-avos processada: "
+        "16 jogos atualizados."
+    )    
