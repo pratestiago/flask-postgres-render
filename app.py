@@ -1332,6 +1332,107 @@ LEFT JOIN competicao_confronto_jogos jv
                 "status": status
             })
 
+                    # =========================
+        # OITAVAS DE FINAL
+        # =========================
+        cursor.execute("""
+            SELECT
+                cc.ordem_na_fase,
+
+                cc.time_a_id,
+                ta.nome_time,
+                ca.nome,
+                cc.ranking_a,
+
+                cc.time_b_id,
+                tb.nome_time,
+                cb.nome,
+                cc.ranking_b,
+
+                ji.pontuacao_a,
+                ji.pontuacao_b,
+                jv.pontuacao_a,
+                jv.pontuacao_b,
+
+                cc.pontuacao_a,
+                cc.pontuacao_b,
+                cc.vencedor_id,
+                cc.status
+
+            FROM competicao_confrontos cc
+
+            JOIN competicao_fases cf
+                ON cf.id = cc.fase_id
+
+            LEFT JOIN times ta
+                ON ta.id = cc.time_a_id
+
+            LEFT JOIN cartoleiros ca
+                ON ca.id = ta.cartoleiro_id
+
+            LEFT JOIN times tb
+                ON tb.id = cc.time_b_id
+
+            LEFT JOIN cartoleiros cb
+                ON cb.id = tb.cartoleiro_id
+
+            LEFT JOIN competicao_confronto_jogos ji
+                ON ji.confronto_id = cc.id
+               AND ji.ordem = 1
+
+            LEFT JOIN competicao_confronto_jogos jv
+                ON jv.confronto_id = cc.id
+               AND jv.ordem = 2
+
+            WHERE cc.competicao_id = %s
+              AND LOWER(cf.nome_fase) = 'oitavas de final'
+
+            ORDER BY cc.ordem_na_fase
+        """, (competicao_id,))
+
+        confrontos_oitavas = []
+
+        for (
+            ordem,
+            time_a_id, time_a, cartoleiro_a, ranking_a,
+            time_b_id, time_b, cartoleiro_b, ranking_b,
+            ida_a, ida_b,
+            volta_a, volta_b,
+            total_a, total_b,
+            vencedor_id, status
+        ) in cursor.fetchall():
+
+            confrontos_oitavas.append({
+                "ordem": ordem,
+
+                "time_a": time_a,
+                "cartoleiro_a": cartoleiro_a,
+                "ranking_a": ranking_a,
+
+                "time_b": time_b,
+                "cartoleiro_b": cartoleiro_b,
+                "ranking_b": ranking_b,
+
+                "ida_a": ida_a,
+                "ida_b": ida_b,
+                "volta_a": volta_a,
+                "volta_b": volta_b,
+                "total_a": total_a,
+                "total_b": total_b,
+
+                "vencedor_a": (
+                    vencedor_id is not None
+                    and vencedor_id == time_a_id
+                ),
+                "vencedor_b": (
+                    vencedor_id is not None
+                    and vencedor_id == time_b_id
+                ),
+
+                "status": status
+            })
+
+
     finally:
         cursor.close()
         conn.close()
@@ -1346,7 +1447,8 @@ LEFT JOIN competicao_confronto_jogos jv
         grupos=grupos,
         jogos_grupos=jogos_grupos,
         classificacao_grupos=classificacao_grupos,
-        confrontos_16_avos=confrontos_16_avos
+        confrontos_16_avos=confrontos_16_avos,
+        confrontos_oitavas=confrontos_oitavas
     )
     
     

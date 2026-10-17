@@ -76,6 +76,9 @@ def processar_champions_duplas(conn, ano, rodada_atual):
         if rodada_atual >= 29 and oitavas:
             quartas = montar_quartas(oitavas)
 
+        if rodada_atual >= 30 and quartas:
+            quartas = processar_ida_quartas(cursor, ano, quartas)
+
         resultado = {
             "ranking": ranking,
             "grupos": grupos,
@@ -755,4 +758,28 @@ def montar_quartas(oitavas):
             "vencedor": None,
             "status": "aguardando",
         })
+    return quartas
+
+
+# =========================
+# PROCESSAR IDA DAS QUARTAS (RODADA 30)
+# =========================
+def processar_ida_quartas(cursor, ano, quartas):
+    """Preenche os placares de ida das quartas sem gravar no banco."""
+    pontos_rodada = buscar_pontos_rodada_duplas(cursor, ano, 30)
+
+    for confronto in quartas:
+        dupla_a = confronto.get("dupla_a")
+        dupla_b = confronto.get("dupla_b")
+        if not dupla_a or not dupla_b:
+            continue
+
+        pontos_a = pontos_rodada.get(dupla_a["id"])
+        pontos_b = pontos_rodada.get(dupla_b["id"])
+        confronto["pontos_ida_a"] = pontos_a
+        confronto["pontos_ida_b"] = pontos_b
+
+        if pontos_a is not None and pontos_b is not None:
+            confronto["status"] = "ida_encerrada"
+
     return quartas

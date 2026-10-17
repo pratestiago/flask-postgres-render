@@ -313,10 +313,16 @@
                             <hr>
                             <div class="text-center">
                                 <small>Ida — Rodada {{ confronto.rodada_ida }}</small>
-                                <div><strong>— × —</strong></div>
+                                <div><strong>{% if confronto.pontos_ida_a is not none and confronto.pontos_ida_b is not none %}{{ "%.2f"|format(confronto.pontos_ida_a) }} × {{ "%.2f"|format(confronto.pontos_ida_b) }}{% else %}— × —{% endif %}</strong></div>
                                 <small>Volta — Rodada {{ confronto.rodada_volta }}</small>
-                                <div><strong>— × —</strong></div>
-                                <div class="mt-2 text-muted">Aguardando resultados</div>
+                                <div><strong>{% if confronto.pontos_volta_a is not none and confronto.pontos_volta_b is not none %}{{ "%.2f"|format(confronto.pontos_volta_a) }} × {{ "%.2f"|format(confronto.pontos_volta_b) }}{% else %}— × —{% endif %}</strong></div>
+                                {% if confronto.vencedor %}
+                                    <div class="mt-2 text-success fw-bold">✅ Classificada: {{ confronto.vencedor.nome }}</div>
+                                {% elif confronto.status == 'ida_encerrada' %}
+                                    <div class="mt-2 text-muted">Ida encerrada — aguardando a volta</div>
+                                {% else %}
+                                    <div class="mt-2 text-muted">Aguardando resultados</div>
+                                {% endif %}
                             </div>
                         </div>
                     </div>

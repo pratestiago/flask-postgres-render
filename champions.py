@@ -3,7 +3,7 @@
 
 def processar_champions(conn, ano, rodada):
 
-    if rodada not in (20, 21, 22, 23, 24, 25, 26, 27, 28, 29):
+    if rodada not in (20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30):
         return
 
     cursor = conn.cursor()
@@ -91,7 +91,21 @@ def processar_champions(conn, ano, rodada):
             processar_ida_16_avos_champions(
                 cursor,
                 ano
-            )   
+            )
+
+        elif rodada == 30:
+
+            # Processa a volta dos 16-avos
+            processar_volta_16_avos_champions(
+                cursor,
+                ano
+            )
+
+    # Cria os 8 confrontos das oitavas
+            criar_oitavas_champions(
+                cursor,
+                ano
+            )           
 
     finally:
         cursor.close()
@@ -1803,3 +1817,293 @@ def processar_ida_16_avos_champions(cursor, ano):
         "[Champions] Ida dos 16-avos processada: "
         "16 jogos atualizados."
     )    
+
+def processar_volta_16_avos_champions(cursor, ano):
+    """
+    Processa a volta dos 16-avos da Champions.
+
+    Ida: rodada 29
+    Volta: rodada 30
+
+    Desempate: melhor ranking inicial da rodada 20.
+    """
+
+    print("[Champions] Processando volta dos 16-avos...")
+
+    cursor.execute("""
+        SELECT c.id, cf.id
+        FROM competicoes c
+        JOIN competicao_fases cf
+            ON cf.competicao_id = c.id
+        WHERE c.tipo = 'champions'
+          AND c.ano = %s
+          AND LOWER(cf.nome_fase) = '16-avos'
+        LIMIT 1
+    """, (ano,))
+
+    dados = cursor.fetchone()
+
+    if not dados:
+        raise RuntimeError(
+            f"16-avos da Champions {ano} não encontrados."
+        )
+
+    competicao_id, fase_id = dados
+
+    cursor.execute("""
+        SELECT id
+        FROM rodadas
+        WHERE ano = %s
+          AND numero = 30
+    """, (ano,))
+
+    rodada = cursor.fetchone()
+
+    if not rodada:
+        raise RuntimeError(
+            f"Rodada 30 de {ano} não encontrada."
+        )
+
+    rodada_id = rodada[0]
+
+    cursor.execute("""
+        SELECT
+            id,
+            time_a_id,
+            time_b_id,
+            ranking_a,
+            ranking_b
+        FROM competicao_confrontos
+        WHERE competicao_id = %s
+          AND fase_id = %s
+        ORDER BY ordem_na_fase
+    """, (competicao_id, fase_id))
+
+    confrontos = cursor.fetchall()
+
+    if len(confrontos) != 16:
+        raise RuntimeError(
+            f"Esperados 16 confrontos, encontrados {len(confrontos)}."
+        )
+
+    for (
+        confronto_id,
+        time_a_id,
+        time_b_id,
+        ranking_a,
+        ranking_b
+    ) in confrontos:
+
+        # Buscar pontuação da ida
+        cursor.execute("""
+            SELECT pontuacao_a, pontuacao_b
+            FROM competicao_confronto_jogos
+            WHERE confronto_id = %s
+              AND ordem = 1
+        """, (confronto_id,))
+
+        jogo_ida = cursor.fetchone()
+
+        if not jogo_ida or any(p is None for p in jogo_ida):
+            raise RuntimeError(
+                f"Ida incompleta no confronto {confronto_id}."
+            )
+
+        pontos_ida_a, pontos_ida_b = jogo_ida
+
+        # Buscar pontuação da rodada 30
+        cursor.execute("""
+            SELECT time_id, pontos
+            FROM resultado_rodada
+            WHERE rodada_id = %s
+              AND time_id IN (%s, %s)
+        """, (rodada_id, time_a_id, time_b_id))
+
+        pontos = dict(cursor.fetchall())
+
+        if time_a_id not in pontos or time_b_id not in pontos:
+            raise RuntimeError(
+                f"Pontuação incompleta no confronto {confronto_id} "
+                f"da rodada 30."
+            )
+
+        pontos_volta_a = pontos[time_a_id]
+        pontos_volta_b = pontos[time_b_id]
+
+        # Gravar jogo da volta
+        cursor.execute("""
+            INSERT INTO competicao_confronto_jogos (
+                confronto_id,
+                rodada_id,
+                ordem,
+                pontuacao_a,
+                pontuacao_b,
+                processado_em
+            )
+            VALUES (%s, %s, 2, %s, %s, CURRENT_TIMESTAMP)
+            ON CONFLICT (confronto_id, ordem)
+            DO UPDATE SET
+                rodada_id = EXCLUDED.rodada_id,
+                pontuacao_a = EXCLUDED.pontuacao_a,
+                pontuacao_b = EXCLUDED.pontuacao_b,
+                processado_em = CURRENT_TIMESTAMP
+        """, (
+            confronto_id,
+            rodada_id,
+            pontos_volta_a,
+            pontos_volta_b
+        ))
+
+        # Somar ida + volta
+        total_a = pontos_ida_a + pontos_volta_a
+        total_b = pontos_ida_b + pontos_volta_b
+
+        # Definir classificado
+        if total_a > total_b:
+            vencedor_id = time_a_id
+            perdedor_id = time_b_id
+
+        elif total_b > total_a:
+            vencedor_id = time_b_id
+            perdedor_id = time_a_id
+
+        else:
+            if ranking_a < ranking_b:
+                vencedor_id = time_a_id
+                perdedor_id = time_b_id
+            else:
+                vencedor_id = time_b_id
+                perdedor_id = time_a_id
+
+        # Finalizar confronto
+        cursor.execute("""
+            UPDATE competicao_confrontos
+            SET pontuacao_a = %s,
+                pontuacao_b = %s,
+                vencedor_id = %s,
+                perdedor_id = %s,
+                status = 'finalizado'
+            WHERE id = %s
+        """, (
+            total_a,
+            total_b,
+            vencedor_id,
+            perdedor_id,
+            confronto_id
+        ))
+
+    print(
+        "[Champions] Volta dos 16-avos processada: "
+        "16 confrontos finalizados e classificados definidos."
+    )
+
+def criar_oitavas_champions(cursor, ano):
+
+    print("[Champions] Criando confrontos das oitavas...")
+
+    # Localizar competição e fase das oitavas
+    cursor.execute("""
+        SELECT c.id, cf.id, cf.rodada
+        FROM competicoes c
+        JOIN competicao_fases cf
+            ON cf.competicao_id = c.id
+        WHERE c.tipo = 'champions'
+          AND c.ano = %s
+          AND LOWER(cf.nome_fase) = 'oitavas de final'
+        LIMIT 1
+    """, (ano,))
+
+    dados = cursor.fetchone()
+
+    if not dados:
+        raise RuntimeError(
+            f"Oitavas da Champions {ano} não encontradas."
+        )
+
+    competicao_id, fase_id, rodada_fase = dados
+
+    # Evitar confrontos duplicados
+    cursor.execute("""
+        SELECT COUNT(*)
+        FROM competicao_confrontos
+        WHERE competicao_id = %s
+          AND fase_id = %s
+    """, (competicao_id, fase_id))
+
+    if cursor.fetchone()[0] > 0:
+        print("[Champions] Confrontos das oitavas já existem.")
+        return
+
+    # Buscar vencedores dos 16-avos
+    cursor.execute("""
+        SELECT
+            cc.id,
+            cc.vencedor_id,
+            ct.ranking_inicial
+        FROM competicao_confrontos cc
+        JOIN competicao_fases cf
+            ON cf.id = cc.fase_id
+        JOIN competicao_times ct
+            ON ct.competicao_id = cc.competicao_id
+           AND ct.time_id = cc.vencedor_id
+        WHERE cc.competicao_id = %s
+          AND LOWER(cf.nome_fase) = '16-avos'
+          AND cc.status = 'finalizado'
+        ORDER BY cc.ordem_na_fase
+    """, (competicao_id,))
+
+    vencedores = cursor.fetchall()
+
+    if len(vencedores) != 16:
+        raise RuntimeError(
+            f"Esperados 16 classificados, encontrados {len(vencedores)}."
+        )
+
+    # Formar 8 confrontos: 1x2, 3x4, 5x6...
+    for indice in range(0, 16, 2):
+
+        origem_a, time_a, ranking_a = vencedores[indice]
+        origem_b, time_b, ranking_b = vencedores[indice + 1]
+
+        cursor.execute("""
+            INSERT INTO competicao_confrontos (
+                competicao_id,
+                fase_id,
+                rodada,
+                time_a_id,
+                time_b_id,
+                ranking_a,
+                ranking_b,
+                pontuacao_a,
+                pontuacao_b,
+                vencedor_id,
+                perdedor_id,
+                status,
+                origem_time_a_confronto_id,
+                origem_time_b_confronto_id,
+                ordem_na_fase,
+                lado_chave
+            )
+            VALUES (
+                %s, %s, %s,
+                %s, %s,
+                %s, %s,
+                NULL, NULL,
+                NULL, NULL,
+                'criado',
+                 NULL, NULL,
+                %s,
+                NULL
+            )
+        """, (
+            competicao_id,
+            fase_id,
+            rodada_fase,
+            time_a,
+            time_b,
+                        ranking_a,
+            ranking_b,
+            indice // 2 + 1
+        ))
+
+    print("[Champions] 8 confrontos das oitavas criados.")

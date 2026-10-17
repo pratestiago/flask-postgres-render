@@ -260,7 +260,36 @@ def rollback_rodada(ano, rodada):
 
             print(
                 "🧹 Ida dos 16-avos da Champions restaurada."
-            )            
+            ) 
+        if rodada_limite == 29:
+
+            cursor.execute("""
+                UPDATE competicao_confrontos
+                SET status = 'em_andamento',
+                    pontuacao_a = NULL,
+                    pontuacao_b = NULL,
+                    vencedor_id = NULL,
+                    perdedor_id = NULL
+                WHERE competicao_id IN (
+                    SELECT id
+                    FROM competicoes
+                    WHERE tipo = 'champions'
+                      AND ano = %s
+                )
+                  AND fase_id IN (
+                    SELECT cf.id
+                    FROM competicao_fases cf
+                    JOIN competicoes c
+                        ON c.id = cf.competicao_id
+                    WHERE c.tipo = 'champions'
+                      AND c.ano = %s
+                      AND LOWER(cf.nome_fase) = '16-avos'
+                )
+            """, (ano, ano))
+
+            print(
+                "🧹 Volta dos 16-avos da Champions restaurada."
+            )               
 
         # Voltou para antes da volta da repescagem.
         # Mantém o jogo de ida, mas remove o agregado,

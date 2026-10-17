@@ -1,328 +1,330 @@
 {% extends "base.html" %}
 
-{% block title %}Calendário da Competição{% endblock %}
-
 {% block content %}
 
-<h1>📅 Calendário da Competição</h1>
+<div class="container mt-4">
 
-<table class="tabela">
-    <thead>
-        <tr>
-            <th>Descrição</th>
-            <th>Qtd Times</th>
-            <th>Observações</th>
-            <th>Mês</th>
-            <th>Turno</th>
-        </tr>
-    </thead>
-    <tbody>
+    <h1>🏆 Champions de Duplas</h1>
 
-        <tr>
-            <td>RODADA 1 – INÍCIO DA COMPETIÇÃO</td>
-            <td></td>
-            <td></td>
-            <td>JANEIRO</td>
-            <td>1º TURNO</td>
-        </tr>
+    <p>
+        Ano {{ ano }} — situação até a rodada {{ rodada_atual }}
+    </p>
 
-        <tr>
-            <td>RODADA 2 – COPA BRASIL - DIVISÃO DOS TIMES</td>
-            <td>32 TIMES</td>
-            <td></td>
-            <td>FEVEREIRO</td>
-            <td></td>
-        </tr>
+    <hr>
 
-        <tr>
-            <td>RODADA 3</td>
-            <td></td>
-            <td></td>
-            <td>FEVEREIRO</td>
-            <td></td>
-        </tr>
+    <h2>Ranking da rodada 20</h2>
 
-        <tr>
-            <td>RODADA 4 – COPA BRASIL - 1º FASE</td>
-            <td>32 TIMES</td>
-            <td></td>
-            <td>FEVEREIRO</td>
-            <td></td>
-        </tr>
+    <table class="table table-striped">
+        <thead>
+            <tr>
+                <th>Posição</th>
+                <th>Dupla</th>
+                <th>Integrantes</th>
+                <th>Pontos</th>
+            </tr>
+        </thead>
 
-        <tr>
-            <td>RODADA 5 – COPA BRASIL - OITAVAS</td>
-            <td>16 TIMES</td>
-            <td></td>
-            <td>FEVEREIRO</td>
-            <td></td>
-        </tr>
+        <tbody>
 
-        <tr>
-            <td>RODADA 6 – COPA BRASIL - QUARTAS</td>
-            <td>8 TIMES</td>
-            <td></td>
-            <td>MARÇO</td>
-            <td></td>
-        </tr>
+            {% for dupla in ranking %}
 
-        <tr>
-            <td>RODADA 7 – COPA BRASIL - SEMIS</td>
-            <td>4 TIMES</td>
-            <td></td>
-            <td>MARÇO</td>
-            <td></td>
-        </tr>
+                <tr>
+                    <td>{{ dupla.posicao }}º</td>
+                    <td>{{ dupla.nome }}</td>
+                    <td>{{ dupla.times }}</td>
+                    <td>{{ "%.2f"|format(dupla.pontos) }}</td>
+                </tr>
 
-        <tr>
-            <td>RODADA 8 – COPA BRASIL - FINAL</td>
-            <td>2 TIMES</td>
-            <td></td>
-            <td>MARÇO</td>
-            <td></td>
-        </tr>
+            {% endfor %}
 
-        <tr>
-            <td>RODADA 9</td>
-            <td></td>
-            <td></td>
-            <td>ABRIL</td>
-            <td></td>
-        </tr>
+        </tbody>
+    </table>
 
-        <tr>
-            <td>RODADA 10 – COPA MUNDO - DIVISÃO DOS TIMES</td>
-            <td>32 TIMES</td>
-            <td></td>
-            <td>ABRIL</td>
-            <td></td>
-        </tr>
+    <hr>
 
-        <tr>
-            <td>RODADA 11</td>
-            <td></td>
-            <td></td>
-            <td>ABRIL</td>
-            <td></td>
-        </tr>
+    <h2>Classificação dos Grupos</h2>
 
-        <tr>
-            <td>RODADA 12 – COPA MUNDO - GRUPOS</td>
-            <td>32 TIMES</td>
-            <td></td>
-            <td>ABRIL</td>
-            <td></td>
-        </tr>
+    <div class="row">
 
-        <tr>
-            <td>RODADA 13 – COPA MUNDO - GRUPOS</td>
-            <td>32 TIMES</td>
-            <td></td>
-            <td>ABRIL</td>
-            <td></td>
-        </tr>
+        {% for letra, duplas in grupos.items() %}
 
-        <tr>
-            <td>RODADA 14 – COPA MUNDO - GRUPOS</td>
-            <td>32 TIMES</td>
-            <td></td>
-            <td>MAIO</td>
-            <td></td>
-        </tr>
+            <div class="col-md-6 col-lg-4 mb-4">
 
-        <tr>
-            <td>RODADA 15 – COPA MUNDO - OITAVAS</td>
-            <td>16 TIMES</td>
-            <td></td>
-            <td>MAIO</td>
-            <td></td>
-        </tr>
+                <div class="card">
 
-        <tr>
-            <td>RODADA 16 – COPA MUNDO - QUARTAS</td>
-            <td>8 TIMES</td>
-            <td></td>
-            <td>MAIO</td>
-            <td></td>
-        </tr>
+                    <div class="card-header">
+                        <strong>Grupo {{ letra }}</strong>
+                    </div>
 
-        <tr>
-            <td>RODADA 17 – COPA MUNDO - SEMIS</td>
-            <td>4 TIMES</td>
-            <td></td>
-            <td>MAIO</td>
-            <td></td>
-        </tr>
+                    <div class="card-body">
 
-        <tr>
-            <td>RODADA 18 – COPA MUNDO - FINAL</td>
-            <td>2 TIMES</td>
-            <td></td>
-            <td>MAIO</td>
-            <td></td>
-        </tr>
+                        {% for dupla in duplas %}
 
-        <tr>
-            <td>RODADA 19</td>
-            <td></td>
-            <td></td>
-            <td>JULHO</td>
-            <td></td>
-        </tr>
+                            <div class="mb-3">
 
-        <tr>
-            <td>RODADA 20 – CHAMPIONS - DIVISÃO DOS TIMES</td>
-            <td>32 TIMES</td>
-            <td></td>
-            <td>JULHO</td>
-            <td>2º TURNO</td>
-        </tr>
+                                <strong>
+                                    {{ dupla.posicao_grupo }}º —
+                                    {{ dupla.nome }}
+                                </strong>
 
-        <tr>
-            <td>RODADA 21</td>
-            <td></td>
-            <td></td>
-            <td>JULHO</td>
-            <td></td>
-        </tr>
+                                <div>
+                                    {{ dupla.times }}
+                                </div>
 
-        <tr>
-            <td>RODADA 22 – CHAMPIONS - GRUPOS</td>
-            <td>32 TIMES</td>
-            <td></td>
-            <td>AGOSTO</td>
-            <td></td>
-        </tr>
+                                <small>
+                                    <strong>
+                                        {{ dupla.pg|default(0) }} pts
+                                    </strong>
 
-        <tr>
-            <td>RODADA 23 – CHAMPIONS - GRUPOS</td>
-            <td>32 TIMES</td>
-            <td></td>
-            <td>AGOSTO</td>
-            <td></td>
-        </tr>
+                                    |
 
-        <tr>
-            <td>RODADA 24 – CHAMPIONS - GRUPOS</td>
-            <td>32 TIMES</td>
-            <td></td>
-            <td>AGOSTO</td>
-            <td></td>
-        </tr>
+                                    {{ "%.2f"|format(dupla.gp|default(0)) }}
+                                    pontos Cartola
+                                </small>
 
-        <tr>
-            <td>RODADA 25 – CHAMPIONS - GRUPOS</td>
-            <td>32 TIMES</td>
-            <td></td>
-            <td>AGOSTO</td>
-            <td></td>
-        </tr>
+                            </div>
 
-        <tr>
-            <td>RODADA 26 – CHAMPIONS - GRUPOS</td>
-            <td>32 TIMES</td>
-            <td></td>
-            <td>SETEMBRO</td>
-            <td></td>
-        </tr>
+                            {% if not loop.last %}
+                                <hr>
+                            {% endif %}
 
-        <tr>
-            <td>RODADA 27 – CHAMPIONS - GRUPOS</td>
-            <td>32 TIMES</td>
-            <td></td>
-            <td>SETEMBRO</td>
-            <td></td>
-        </tr>
+                        {% endfor %}
 
-        <tr>
-            <td>RODADA 28 – CHAMPIONS - OITAVAS</td>
-            <td>16 TIMES</td>
-            <td></td>
-            <td>SETEMBRO</td>
-            <td></td>
-        </tr>
+                    </div>
 
-        <tr>
-            <td>RODADA 29 – CHAMPIONS - OITAVAS</td>
-            <td>16 TIMES</td>
-            <td></td>
-            <td>OUTUBRO</td>
-            <td></td>
-        </tr>
+                </div>
 
-        <tr>
-            <td>RODADA 30 – CHAMPIONS - QUARTAS</td>
-            <td>8 TIMES</td>
-            <td></td>
-            <td>OUTUBRO</td>
-            <td></td>
-        </tr>
+            </div>
 
-        <tr>
-            <td>RODADA 31 – CHAMPIONS - QUARTAS</td>
-            <td>8 TIMES</td>
-            <td></td>
-            <td>OUTUBRO</td>
-            <td></td>
-        </tr>
+        {% endfor %}
 
-        <tr>
-            <td>RODADA 32 – CHAMPIONS - SEMIS</td>
-            <td>4 TIMES</td>
-            <td></td>
-            <td>OUTUBRO</td>
-            <td></td>
-        </tr>
+    </div>
 
-        <tr>
-            <td>RODADA 33 – CHAMPIONS - SEMIS</td>
-            <td>4 TIMES</td>
-            <td></td>
-            <td>OUTUBRO</td>
-            <td></td>
-        </tr>
 
-        <tr>
-            <td>RODADA 34 – CHAMPIONS - FINAL</td>
-            <td>2 TIMES</td>
-            <td></td>
-            <td>NOVEMBRO</td>
-            <td></td>
-        </tr>
+    {% if fase_grupos %}
 
-        <tr>
-            <td>RODADA 35</td>
-            <td></td>
-            <td></td>
-            <td>NOVEMBRO</td>
-            <td></td>
-        </tr>
+        <hr>
 
-        <tr>
-            <td>RODADA 36</td>
-            <td></td>
-            <td></td>
-            <td>NOVEMBRO</td>
-            <td></td>
-        </tr>
+        <h2>Fase de Grupos</h2>
 
-        <tr>
-            <td>RODADA 37</td>
-            <td></td>
-            <td></td>
-            <td>NOVEMBRO</td>
-            <td></td>
-        </tr>
+        {% for grupo, confrontos in fase_grupos.items() %}
 
-        <tr>
-            <td>RODADA 38 – FIM DA COMPETIÇÃO</td>
-            <td></td>
-            <td></td>
-            <td>DEZEMBRO</td>
-            <td></td>
-        </tr>
+            <div class="card mb-4">
 
-    </tbody>
-</table>
+                <div class="card-header">
+
+                    <strong>Grupo {{ grupo }}</strong>
+
+                </div>
+
+                <div class="card-body">
+
+                    {% for confronto in confrontos %}
+
+                        <div class="mb-3">
+
+                            <strong>
+                                Rodada {{ confronto.rodada }}
+                            </strong>
+
+                            <br>
+
+                            <strong>
+                                {{ confronto.dupla_a.nome }}
+                            </strong>
+
+                            {% if confronto.pontos_a is not none %}
+                                ({{ "%.2f"|format(confronto.pontos_a) }})
+                            {% else %}
+                                (aguardando)
+                            {% endif %}
+
+                            &nbsp;
+
+                            <strong>×</strong>
+
+                            &nbsp;
+
+                            <strong>
+                                {{ confronto.dupla_b.nome }}
+                            </strong>
+
+                            {% if confronto.pontos_b is not none %}
+                                ({{ "%.2f"|format(confronto.pontos_b) }})
+                            {% else %}
+                                (aguardando)
+                            {% endif %}
+
+
+                            {% if confronto.resultado_tabela %}
+
+                                <br>
+
+                                <small>
+
+                                    Pontos na classificação:
+
+                                    <strong>
+                                        {{ confronto.resultado_tabela }}
+                                    </strong>
+
+                                </small>
+
+                            {% endif %}
+
+                        </div>
+
+                        {% if not loop.last %}
+                            <hr>
+                        {% endif %}
+
+                    {% endfor %}
+
+                </div>
+
+            </div>
+
+        {% endfor %}
+
+    {% endif %}
+
+
+    {% if resultado.oitavas %}
+
+        <hr>
+
+        <h2>Oitavas de Final</h2>
+
+        <p>
+            Confrontos definidos pela classificação da fase de grupos.
+            Jogos de ida e volta — rodadas 28 e 29.
+        </p>
+
+        <div class="row">
+
+            {% for confronto in resultado.oitavas %}
+
+                <div class="col-md-6 mb-4">
+
+                    <div class="card">
+
+                        <div class="card-header">
+                            <strong>
+                                Jogo {{ confronto.jogo }}
+                            </strong>
+                        </div>
+
+                        <div class="card-body">
+
+                            <div class="mb-2">
+
+                                <strong>
+                                    {{ confronto.dupla_a.nome }}
+                                </strong>
+
+                                <br>
+
+                                <small>
+                                    {{ confronto.posicao_a }}º do Grupo
+                                    {{ confronto.grupo_a }}
+                                </small>
+
+                                <br>
+
+                                <small>
+                                    {{ confronto.dupla_a.times }}
+                                </small>
+
+                            </div>
+
+                            <div class="text-center my-3">
+
+                                <strong>×</strong>
+
+                            </div>
+
+                            <div>
+
+                                <strong>
+                                    {{ confronto.dupla_b.nome }}
+                                </strong>
+
+                                <br>
+
+                                <small>
+                                    {{ confronto.posicao_b }}º do Grupo
+                                    {{ confronto.grupo_b }}
+                                </small>
+
+                                <br>
+
+                                <small>
+                                    {{ confronto.dupla_b.times }}
+                                </small>
+
+                            </div>
+
+                            <hr>
+
+                        <div class="text-center">
+                            <small>Ida — Rodada {{ confronto.rodada_ida }}</small>
+                            <div><strong>{% if confronto.pontos_ida_a is not none and confronto.pontos_ida_b is not none %}{{ "%.2f"|format(confronto.pontos_ida_a) }} × {{ "%.2f"|format(confronto.pontos_ida_b) }}{% else %}— × —{% endif %}</strong></div>
+                            <small>Volta — Rodada {{ confronto.rodada_volta }}</small>
+                            <div><strong>{% if confronto.pontos_volta_a is not none and confronto.pontos_volta_b is not none %}{{ "%.2f"|format(confronto.pontos_volta_a) }} × {{ "%.2f"|format(confronto.pontos_volta_b) }}{% else %}— × —{% endif %}</strong></div>
+                            <hr>
+                            <strong>Total:</strong>
+                            {% if confronto.total_a is not none and confronto.total_b is not none %}
+                                <div class="fw-bold">{{ "%.2f"|format(confronto.total_a) }} × {{ "%.2f"|format(confronto.total_b) }}</div>
+                            {% else %}<div>Aguardando conclusão</div>{% endif %}
+                            {% if confronto.vencedor %}
+                                <div class="mt-2 text-success fw-bold">✅ Classificada: {{ confronto.vencedor.nome }}</div>
+                                {% if confronto.desempate|default(false) %}<small class="text-muted">Desempate pela campanha na fase de grupos (PG, GP e ranking inicial).</small>{% endif %}
+                            {% endif %}
+                        </div>
+                        </div>
+
+                    </div>
+
+                </div>
+
+            {% endfor %}
+
+        </div>
+
+    {% endif %}
+
+
+
+    {% if resultado.quartas %}
+        <hr>
+        <h2>Quartas de Final</h2>
+        <p>Ida na rodada 30 e volta na rodada 31. Cruzamentos definidos pelos vencedores das oitavas.</p>
+        <div class="row">
+            {% for confronto in resultado.quartas %}
+                <div class="col-md-6 mb-4">
+                    <div class="card h-100">
+                        <div class="card-header"><strong>Quartas — Jogo {{ confronto.jogo }}</strong></div>
+                        <div class="card-body">
+                            <div><strong>{% if confronto.dupla_a %}{{ confronto.dupla_a.nome }}{% else %}Vencedor {{ confronto.origem_a }}{% endif %}</strong></div>
+                            <small class="text-muted">{{ confronto.origem_a }}{% if confronto.dupla_a %} — {{ confronto.dupla_a.times }}{% endif %}</small>
+                            <div class="text-center my-2"><strong>×</strong></div>
+                            <div><strong>{% if confronto.dupla_b %}{{ confronto.dupla_b.nome }}{% else %}Vencedor {{ confronto.origem_b }}{% endif %}</strong></div>
+                            <small class="text-muted">{{ confronto.origem_b }}{% if confronto.dupla_b %} — {{ confronto.dupla_b.times }}{% endif %}</small>
+                            <hr>
+                            <div class="text-center">
+                                <small>Ida — Rodada {{ confronto.rodada_ida }}</small>
+                                <div><strong>{% if confronto.pontos_ida_a is not none and confronto.pontos_ida_b is not none %}{{ "%.2f"|format(confronto.pontos_ida_a) }} × {{ "%.2f"|format(confronto.pontos_ida_b) }}{% else %}— × —{% endif %}</strong></div>
+                                <small>Volta — Rodada {{ confronto.rodada_volta }}</small>
+                                <div><strong>— × —</strong></div>
+                                <div class="mt-2 text-muted">Aguardando resultados</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+    {% endif %}
+
+</div>
 
 {% endblock %}
