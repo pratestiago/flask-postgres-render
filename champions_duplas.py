@@ -79,6 +79,9 @@ def processar_champions_duplas(conn, ano, rodada_atual):
         if rodada_atual >= 30 and quartas:
             quartas = processar_ida_quartas(cursor, ano, quartas)
 
+        if rodada_atual >= 31 and quartas:
+            quartas = processar_volta_quartas(cursor, ano, quartas)
+
         resultado = {
             "ranking": ranking,
             "grupos": grupos,
@@ -781,5 +784,55 @@ def processar_ida_quartas(cursor, ano, quartas):
 
         if pontos_a is not None and pontos_b is not None:
             confronto["status"] = "ida_encerrada"
+
+    return quartas
+
+
+# =========================
+# PROCESSAR VOLTA DAS QUARTAS (RODADA 31)
+# =========================
+def processar_volta_quartas(cursor, ano, quartas):
+    """Soma ida (30) e volta (31) e define os semifinalistas.
+
+    Em empate no agregado, desempata por PG e GP da fase de grupos
+    e, por último, pelo ranking inicial da rodada 20.
+    Não grava dados no banco.
+    """
+    pontos_rodada = buscar_pontos_rodada_duplas(cursor, ano, 31)
+
+    for confronto in quartas:
+        dupla_a = confronto.get("dupla_a")
+        dupla_b = confronto.get("dupla_b")
+        if not dupla_a or not dupla_b:
+            continue
+
+        ida_a = confronto.get("pontos_ida_a")
+        ida_b = confronto.get("pontos_ida_b")
+        volta_a = pontos_rodada.get(dupla_a["id"])
+        volta_b = pontos_rodada.get(dupla_b["id"])
+
+        confronto["pontos_volta_a"] = volta_a
+        confronto["pontos_volta_b"] = volta_b
+
+        if any(p is None for p in (ida_a, ida_b, volta_a, volta_b)):
+            continue
+
+        total_a = round(ida_a + volta_a, 6)
+        total_b = round(ida_b + volta_b, 6)
+        confronto["total_a"] = total_a
+        confronto["total_b"] = total_b
+
+        if total_a > total_b:
+            vencedor = dupla_a
+        elif total_b > total_a:
+            vencedor = dupla_b
+        else:
+            criterio_a = (dupla_a.get("pg", 0), dupla_a.get("gp", 0), -dupla_a["posicao"])
+            criterio_b = (dupla_b.get("pg", 0), dupla_b.get("gp", 0), -dupla_b["posicao"])
+            vencedor = dupla_a if criterio_a > criterio_b else dupla_b
+            confronto["desempate"] = "campanha_fase_grupos"
+
+        confronto["vencedor"] = vencedor
+        confronto["status"] = "encerrado"
 
     return quartas
