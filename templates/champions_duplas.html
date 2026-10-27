@@ -331,6 +331,41 @@
         </div>
     {% endif %}
 
+
+    {% if resultado.semifinais %}
+        <hr>
+        <h2>Semifinais</h2>
+        <p>Ida na rodada 32 e volta na rodada 33. Cruzamentos: Q1 × Q2 e Q3 × Q4.</p>
+        <div class="row">
+            {% for confronto in resultado.semifinais %}
+                <div class="col-md-6 mb-4">
+                    <div class="card h-100">
+                        <div class="card-header"><strong>Semifinal — Jogo {{ confronto.jogo }}</strong></div>
+                        <div class="card-body">
+                            <div><strong>{% if confronto.dupla_a %}{{ confronto.dupla_a.nome }}{% else %}Vencedor {{ confronto.origem_a }}{% endif %}</strong></div>
+                            <small class="text-muted">{{ confronto.origem_a }}{% if confronto.dupla_a %} — {{ confronto.dupla_a.times }}{% endif %}</small>
+                            <div class="text-center my-2"><strong>×</strong></div>
+                            <div><strong>{% if confronto.dupla_b %}{{ confronto.dupla_b.nome }}{% else %}Vencedor {{ confronto.origem_b }}{% endif %}</strong></div>
+                            <small class="text-muted">{{ confronto.origem_b }}{% if confronto.dupla_b %} — {{ confronto.dupla_b.times }}{% endif %}</small>
+                            <hr>
+                            <div class="text-center">
+                                <small>Ida — Rodada {{ confronto.rodada_ida }}</small>
+                                <div><strong>{% if confronto.pontos_ida_a is not none and confronto.pontos_ida_b is not none %}{{ "%.2f"|format(confronto.pontos_ida_a) }} × {{ "%.2f"|format(confronto.pontos_ida_b) }}{% else %}— × —{% endif %}</strong></div>
+                                <small>Volta — Rodada {{ confronto.rodada_volta }}</small>
+                                <div><strong>{% if confronto.pontos_volta_a is not none and confronto.pontos_volta_b is not none %}{{ "%.2f"|format(confronto.pontos_volta_a) }} × {{ "%.2f"|format(confronto.pontos_volta_b) }}{% else %}— × —{% endif %}</strong></div>
+                                {% if confronto.status == 'ida_encerrada' %}
+                                    <div class="mt-2 text-muted">Ida encerrada — aguardando a volta</div>
+                                {% else %}
+                                    <div class="mt-2 text-muted">Aguardando resultados</div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+    {% endif %}
+
 </div>
 
 {% endblock %}

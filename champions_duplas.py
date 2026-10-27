@@ -82,13 +82,20 @@ def processar_champions_duplas(conn, ano, rodada_atual):
         if rodada_atual >= 31 and quartas:
             quartas = processar_volta_quartas(cursor, ano, quartas)
 
+        semifinais = None
+        if rodada_atual >= 31 and quartas:
+            semifinais = montar_semifinais(quartas)
+
+        if rodada_atual >= 32 and semifinais:
+            semifinais = processar_ida_semifinais(cursor, ano, semifinais)
+
         resultado = {
             "ranking": ranking,
             "grupos": grupos,
             "fase_grupos": fase_grupos,
             "oitavas": oitavas,
             "quartas": quartas,
-            "semifinais": None,
+            "semifinais": semifinais,
             "final": None,
             "campeao": None,
         }
@@ -836,3 +843,51 @@ def processar_volta_quartas(cursor, ano, quartas):
         confronto["status"] = "encerrado"
 
     return quartas
+
+
+# =========================
+# SEMIFINAIS (IDA 32, VOLTA 33)
+# =========================
+def montar_semifinais(quartas):
+    """Cruzamentos S1: Q1 x Q2 e S2: Q3 x Q4, sem persistência."""
+    if len(quartas) != 4:
+        raise ValueError("São necessários 4 confrontos de quartas para montar as semifinais.")
+
+    semifinais = []
+    for indice in range(0, 4, 2):
+        qa, qb = quartas[indice], quartas[indice + 1]
+        semifinais.append({
+            "jogo": indice // 2 + 1,
+            "origem_a": f"Q{qa['jogo']}",
+            "origem_b": f"Q{qb['jogo']}",
+            "dupla_a": qa.get("vencedor"),
+            "dupla_b": qb.get("vencedor"),
+            "rodada_ida": 32,
+            "rodada_volta": 33,
+            "pontos_ida_a": None,
+            "pontos_ida_b": None,
+            "pontos_volta_a": None,
+            "pontos_volta_b": None,
+            "total_a": None,
+            "total_b": None,
+            "vencedor": None,
+            "status": "aguardando",
+        })
+    return semifinais
+
+
+def processar_ida_semifinais(cursor, ano, semifinais):
+    """Preenche a ida da rodada 32, mantendo a volta 33 pendente."""
+    pontos_rodada = buscar_pontos_rodada_duplas(cursor, ano, 32)
+    for confronto in semifinais:
+        dupla_a = confronto.get("dupla_a")
+        dupla_b = confronto.get("dupla_b")
+        if not dupla_a or not dupla_b:
+            continue
+        pontos_a = pontos_rodada.get(dupla_a["id"])
+        pontos_b = pontos_rodada.get(dupla_b["id"])
+        confronto["pontos_ida_a"] = pontos_a
+        confronto["pontos_ida_b"] = pontos_b
+        if pontos_a is not None and pontos_b is not None:
+            confronto["status"] = "ida_encerrada"
+    return semifinais
