@@ -703,6 +703,75 @@
         </div>
     </div>
 
+    <!-- ========================= -->
+    <!-- QUARTAS DE FINAL -->
+    <!-- ========================= -->
+    <div class="card">
+        <div class="card-header">
+            <h2>🏆 Quartas de Final</h2>
+            <span>Rodadas 33 e 34</span>
+        </div>
+
+        <div class="card-body">
+
+            {% if confrontos_quartas is defined and confrontos_quartas %}
+
+                <div style="overflow-x: auto;">
+                    <table class="tabela">
+                        <thead>
+                            <tr>
+                                <th>#</th>
+                                <th>Ranking</th>
+                                <th>Time A</th>
+                                <th></th>
+                                <th>Time B</th>
+                                <th>Ranking</th>
+                            </tr>
+                        </thead>
+
+                        <tbody>
+                            {% for confronto in confrontos_quartas %}
+                                <tr>
+                                    <td>{{ confronto.ordem }}</td>
+
+                                    <td>{{ confronto.ranking_a }}</td>
+
+                                    <td>
+                                        <strong>{{ confronto.time_a }}</strong>
+                                        {% if confronto.cartoleiro_a %}
+                                            <br>
+                                            <small>{{ confronto.cartoleiro_a }}</small>
+                                        {% endif %}
+                                    </td>
+
+                                    <td><strong>×</strong></td>
+
+                                    <td>
+                                        <strong>{{ confronto.time_b }}</strong>
+                                        {% if confronto.cartoleiro_b %}
+                                            <br>
+                                            <small>{{ confronto.cartoleiro_b }}</small>
+                                        {% endif %}
+                                    </td>
+
+                                    <td>{{ confronto.ranking_b }}</td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+
+                <small>⚔️ Confrontos definidos após a rodada 32.</small>
+
+            {% else %}
+
+                <p>⏳ Aguardando a definição dos classificados das oitavas de final.</p>
+
+            {% endif %}
+
+        </div>
+    </div>
+
 </div>
 
 {% endblock %}

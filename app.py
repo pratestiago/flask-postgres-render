@@ -1433,9 +1433,68 @@ LEFT JOIN competicao_confronto_jogos jv
             })
 
 
+
+
+        # ==============================
+        # CHAMPIONS - QUARTAS DE FINAL
+        # ==============================
+
+        cursor.execute("""
+            SELECT
+                cc.ordem_na_fase,
+                ta.nome_time,
+                ca.nome,
+                cc.ranking_a,
+                tb.nome_time,
+                cb.nome,
+                cc.ranking_b
+            FROM competicao_confrontos cc
+
+            JOIN competicao_fases cf
+                ON cf.id = cc.fase_id
+
+            LEFT JOIN times ta
+                ON ta.id = cc.time_a_id
+
+            LEFT JOIN cartoleiros ca
+                ON ca.id = ta.cartoleiro_id
+
+            LEFT JOIN times tb
+                ON tb.id = cc.time_b_id
+
+            LEFT JOIN cartoleiros cb
+                ON cb.id = tb.cartoleiro_id
+
+            WHERE cc.competicao_id = %s
+              AND LOWER(cf.nome_fase) IN (
+                  'quartas de final',
+                  'quartas'
+              )
+
+            ORDER BY cc.ordem_na_fase
+        """, (competicao_id,))
+
+        confrontos_quartas = []
+
+        for (
+            ordem,
+            time_a, cartoleiro_a, ranking_a,
+            time_b, cartoleiro_b, ranking_b
+        ) in cursor.fetchall():
+
+            confrontos_quartas.append({
+                "ordem": ordem,
+                "time_a": time_a,
+                "cartoleiro_a": cartoleiro_a,
+                "ranking_a": ranking_a,
+                "time_b": time_b,
+                "cartoleiro_b": cartoleiro_b,
+                "ranking_b": ranking_b
+            })   
+            
     finally:
         cursor.close()
-        conn.close()
+        conn.close()             
 
 
     return render_template(
@@ -1448,7 +1507,8 @@ LEFT JOIN competicao_confronto_jogos jv
         jogos_grupos=jogos_grupos,
         classificacao_grupos=classificacao_grupos,
         confrontos_16_avos=confrontos_16_avos,
-        confrontos_oitavas=confrontos_oitavas
+        confrontos_oitavas=confrontos_oitavas,
+        confrontos_quartas=confrontos_quartas,
     )
     
     
@@ -2026,6 +2086,9 @@ def resultados_duplas_champions():
     finally:
         cursor.close()
         conn.close()
+
+
+        
 
 
 @app.route("/direcao")
